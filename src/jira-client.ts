@@ -61,7 +61,7 @@ interface JiraIssue {
 }
 
 export async function fetchJiraTickets({ domain, email, token }: JiraCredentials): Promise<Ticket[]> {
-  const response = await fetch(`https://${domain}/rest/api/3/search`, {
+  const response = await fetch(`https://${domain}/rest/api/3/search/jql`, {
     method: 'POST',
     headers: {
       Authorization: `Basic ${btoa(`${email}:${token}`)}`,
@@ -75,7 +75,7 @@ export async function fetchJiraTickets({ domain, email, token }: JiraCredentials
     throw new Error(`Jira API error: ${response.status} ${response.statusText}`);
   }
 
-  const data = (await response.json()) as { issues: JiraIssue[] };
+  const data = (await response.json()) as { issues: JiraIssue[]; isLast: boolean; nextPageToken?: string };
 
   return data.issues.map((issue) => ({
     key: issue.key,

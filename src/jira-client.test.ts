@@ -33,7 +33,7 @@ beforeEach(() => {
 // --- Slice 1: Basic Auth header ---
 describe('Basic Auth header', () => {
   it('sends Authorization: Basic base64(email:token)', async () => {
-    const fetchSpy = mockFetch(200, { issues: [makeIssue()] });
+    const fetchSpy = mockFetch(200, { issues: [makeIssue()], isLast: true });
 
     await fetchJiraTickets(CREDS);
 
@@ -47,7 +47,7 @@ describe('Basic Auth header', () => {
 // --- Slice 2: JQL in request ---
 describe('JQL query', () => {
   it('includes the correct JQL in the POST body', async () => {
-    const fetchSpy = mockFetch(200, { issues: [makeIssue()] });
+    const fetchSpy = mockFetch(200, { issues: [makeIssue()], isLast: true });
 
     await fetchJiraTickets(CREDS);
 
@@ -57,12 +57,12 @@ describe('JQL query', () => {
   });
 
   it('POSTs to the correct Jira Cloud search endpoint', async () => {
-    const fetchSpy = mockFetch(200, { issues: [makeIssue()] });
+    const fetchSpy = mockFetch(200, { issues: [makeIssue()], isLast: true });
 
     await fetchJiraTickets(CREDS);
 
     const [url, init] = fetchSpy.mock.calls[0];
-    expect(url).toBe('https://mycompany.atlassian.net/rest/api/3/search');
+    expect(url).toBe('https://mycompany.atlassian.net/rest/api/3/search/jql');
     expect(init?.method).toBe('POST');
   });
 });
@@ -79,6 +79,7 @@ describe('Ticket normalisation', () => {
           duedate: '2026-10-25',
         }),
       ],
+      isLast: true,
     });
 
     const tickets = await fetchJiraTickets(CREDS);
@@ -97,7 +98,7 @@ describe('Ticket normalisation', () => {
   });
 
   it('returns an empty array when issues list is empty', async () => {
-    mockFetch(200, { issues: [] });
+    mockFetch(200, { issues: [], isLast: true });
 
     const tickets = await fetchJiraTickets(CREDS);
 
@@ -108,7 +109,7 @@ describe('Ticket normalisation', () => {
 // --- Slice 4: dueDate null ---
 describe('dueDate handling', () => {
   it('sets dueDate to null when Jira returns no due date', async () => {
-    mockFetch(200, { issues: [makeIssue({ duedate: null })] });
+    mockFetch(200, { issues: [makeIssue({ duedate: null })], isLast: true });
 
     const [ticket] = await fetchJiraTickets(CREDS);
 
@@ -119,7 +120,7 @@ describe('dueDate handling', () => {
     const issue = makeIssue();
     // @ts-expect-error — intentionally omitting duedate
     delete issue.fields.duedate;
-    mockFetch(200, { issues: [issue] });
+    mockFetch(200, { issues: [issue], isLast: true });
 
     const [ticket] = await fetchJiraTickets(CREDS);
 
@@ -144,6 +145,7 @@ describe('statusCategory derivation', () => {
             status: { name: 'Some Status', statusCategory: { key: categoryKey } },
           }),
         ],
+        isLast: true,
       });
 
       const [ticket] = await fetchJiraTickets(CREDS);
