@@ -46,25 +46,24 @@ describe('Basic Auth header', () => {
 
 // --- Slice 2: JQL in request ---
 describe('JQL query', () => {
-  it('includes the correct JQL as a query parameter', async () => {
+  it('includes the correct JQL in the POST body', async () => {
     const fetchSpy = mockFetch(200, { issues: [makeIssue()] });
 
     await fetchJiraTickets(CREDS);
 
-    const [url] = fetchSpy.mock.calls[0];
-    const jql = new URL(url as string).searchParams.get('jql');
-    expect(jql).toBe('assignee = currentUser() AND statusCategory != Done ORDER BY due ASC');
+    const [, init] = fetchSpy.mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    expect(body.jql).toBe('assignee = currentUser() AND statusCategory != Done ORDER BY due ASC');
   });
 
-  it('targets the correct Jira Cloud search endpoint', async () => {
+  it('POSTs to the correct Jira Cloud search endpoint', async () => {
     const fetchSpy = mockFetch(200, { issues: [makeIssue()] });
 
     await fetchJiraTickets(CREDS);
 
-    const [url] = fetchSpy.mock.calls[0];
-    expect(new URL(url as string).origin + new URL(url as string).pathname).toBe(
-      'https://mycompany.atlassian.net/rest/api/3/search',
-    );
+    const [url, init] = fetchSpy.mock.calls[0];
+    expect(url).toBe('https://mycompany.atlassian.net/rest/api/3/search');
+    expect(init?.method).toBe('POST');
   });
 });
 

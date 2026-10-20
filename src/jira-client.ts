@@ -61,15 +61,14 @@ interface JiraIssue {
 }
 
 export async function fetchJiraTickets({ domain, email, token }: JiraCredentials): Promise<Ticket[]> {
-  const url = new URL(`https://${domain}/rest/api/3/search`);
-  url.searchParams.set('jql', JQL);
-  url.searchParams.set('fields', 'summary,status,priority,duedate');
-
-  const response = await fetch(url.toString(), {
+  const response = await fetch(`https://${domain}/rest/api/3/search`, {
+    method: 'POST',
     headers: {
       Authorization: `Basic ${btoa(`${email}:${token}`)}`,
       Accept: 'application/json',
+      'Content-Type': 'application/json',
     },
+    body: JSON.stringify({ jql: JQL, fields: ['summary', 'status', 'priority', 'duedate'] }),
   });
 
   if (!response.ok) {
