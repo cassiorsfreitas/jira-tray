@@ -10,6 +10,10 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    // Prevent the app from appearing in the Dock and Cmd-Tab switcher on macOS.
+    extendInfo: {
+      LSUIElement: '1',
+    },
   },
   rebuildConfig: {},
   makers: [
