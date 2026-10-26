@@ -1,4 +1,4 @@
-import { app, ipcMain } from 'electron';
+import { app, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { createPopupWindow, createTray } from './tray';
@@ -31,6 +31,10 @@ app.whenReady().then(() => {
   // 'refresh' is a stub — real data fetching wired in a later ticket.
   ipcMain.on('refresh', () => {
     /* no-op */
+  });
+
+  ipcMain.on('open-url', (_, url: string) => {
+    shell.openExternal(url);
   });
 });
 

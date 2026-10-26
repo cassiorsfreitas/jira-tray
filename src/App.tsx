@@ -1,3 +1,86 @@
+import type { Ticket, StatusCategory, Priority } from './jira-client';
+import { groupTickets } from './ticket-grouping';
+import { STUB_TICKETS } from './stub-tickets';
+
+// ── Colour maps ────────────────────────────────────────────────────────────────
+
+const STATUS_PILL_CLASSES: Record<StatusCategory, string> = {
+  todo: 'bg-gray-200 text-gray-600',
+  inprogress: 'bg-blue-100 text-blue-700',
+  inreview: 'bg-purple-100 text-purple-700',
+  done: 'bg-green-100 text-green-700',
+};
+
+const PRIORITY_BORDER_CLASSES: Record<Priority, string> = {
+  highest: 'border-l-red-500',
+  high: 'border-l-orange-500',
+  medium: 'border-l-yellow-500',
+  low: 'border-l-blue-400',
+  lowest: 'border-l-gray-400',
+};
+
+// ── Sub-components ─────────────────────────────────────────────────────────────
+
+function StatusPill({ statusCategory, status }: { statusCategory: StatusCategory; status: string }) {
+  return (
+    <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium leading-none whitespace-nowrap shrink-0 ${STATUS_PILL_CLASSES[statusCategory]}`}>
+      {status}
+    </span>
+  );
+}
+
+function TicketRow({ ticket }: { ticket: Ticket }) {
+  function handleClick() {
+    window.electronAPI.openUrl(ticket.url);
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      className={`w-full text-left flex items-center gap-2 px-3 py-2 border-l-4 ${PRIORITY_BORDER_CLASSES[ticket.priority]} hover:bg-gray-50 focus:outline-none focus:bg-gray-50`}
+    >
+      <span className="text-[11px] font-mono text-gray-400 shrink-0">{ticket.key}</span>
+      <span className="flex-1 text-xs text-gray-800 truncate min-w-0">{ticket.title}</span>
+      <StatusPill statusCategory={ticket.statusCategory} status={ticket.status} />
+      <span className="text-[11px] text-gray-400 shrink-0">{ticket.dueDate}</span>
+    </button>
+  );
+}
+
+function TicketSection({ heading, tickets }: { heading: string; tickets: Ticket[] }) {
+  if (tickets.length === 0) return null;
+
+  return (
+    <section>
+      <h2 className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+        {heading}
+      </h2>
+      <ul>
+        {tickets.map((ticket) => (
+          <li key={ticket.key}>
+            <TicketRow ticket={ticket} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center px-6">
+      <p className="text-sm text-gray-500">You're all caught up</p>
+    </div>
+  );
+}
+
+// ── Root component ─────────────────────────────────────────────────────────────
+
+const today = new Date().toISOString().slice(0, 10);
+const groups = groupTickets(STUB_TICKETS, today);
+const hasAnyTickets =
+  groups.overdue.length > 0 || groups.today.length > 0 || groups.upcoming.length > 0;
+
 export function App() {
   function handleQuit() {
     window.electronAPI.quit();
@@ -13,8 +96,16 @@ export function App() {
         <h1 className="text-sm font-semibold">Jira Tray</h1>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 py-3">
-        <p className="text-xs text-gray-500">Loading issues…</p>
+      <main className="flex-1 overflow-y-auto">
+        {hasAnyTickets ? (
+          <div className="divide-y divide-gray-100">
+            <TicketSection heading="Overdue" tickets={groups.overdue} />
+            <TicketSection heading="Today" tickets={groups.today} />
+            <TicketSection heading="Upcoming" tickets={groups.upcoming} />
+          </div>
+        ) : (
+          <EmptyState />
+        )}
       </main>
 
       <footer className="flex items-center justify-between px-4 py-2 border-t border-gray-200">

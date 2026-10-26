@@ -6,5 +6,6 @@ interface Window {
   electronAPI: {
     quit: () => void;
     refresh: () => void;
+    openUrl: (url: string) => void;
   };
 }
