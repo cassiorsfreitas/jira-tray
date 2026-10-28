@@ -105,10 +105,6 @@ export function App() {
     window.electronAPI.onTicketsError((message) => {
       setError(message);
     });
-    // Request initial data now that listeners are registered, eliminating any
-    // race between popupWindow.show() firing onShow in the main process and
-    // the renderer finishing its mount.
-    window.electronAPI.refresh();
   }, []);
 
   function handleQuit() {
