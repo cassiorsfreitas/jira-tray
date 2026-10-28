@@ -1,6 +1,6 @@
+import { useState, useEffect } from 'react';
 import type { Ticket, StatusCategory, Priority } from './jira-client';
 import { groupTickets } from './ticket-grouping';
-import { STUB_TICKETS } from './stub-tickets';
 
 // ── Colour maps ────────────────────────────────────────────────────────────────
 
@@ -66,6 +66,23 @@ function TicketSection({ heading, tickets }: { heading: string; tickets: Ticket[
   );
 }
 
+function LoadingState() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center px-6">
+      <p className="text-sm text-gray-400">Loading…</p>
+    </div>
+  );
+}
+
+function ErrorState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center px-6 gap-1">
+      <p className="text-xs font-semibold text-red-600">Failed to load tickets</p>
+      <p className="text-xs text-gray-500 break-all">{message}</p>
+    </div>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-6">
@@ -76,12 +93,24 @@ function EmptyState() {
 
 // ── Root component ─────────────────────────────────────────────────────────────
 
-const today = new Date().toISOString().slice(0, 10);
-const groups = groupTickets(STUB_TICKETS, today);
-const hasAnyTickets =
-  groups.overdue.length > 0 || groups.today.length > 0 || groups.upcoming.length > 0;
-
 export function App() {
+  const [tickets, setTickets] = useState<Ticket[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.electronAPI.onTickets((incoming) => {
+      setTickets(incoming);
+      setError(null);
+    });
+    window.electronAPI.onTicketsError((message) => {
+      setError(message);
+    });
+    // Request initial data now that listeners are registered, eliminating any
+    // race between popupWindow.show() firing onShow in the main process and
+    // the renderer finishing its mount.
+    window.electronAPI.refresh();
+  }, []);
+
   function handleQuit() {
     window.electronAPI.quit();
   }
@@ -90,6 +119,12 @@ export function App() {
     window.electronAPI.refresh();
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+  const groups = tickets ? groupTickets(tickets, today) : { overdue: [], today: [], upcoming: [] };
+  const isLoading = tickets === null && error === null;
+  const hasAnyTickets =
+    groups.overdue.length > 0 || groups.today.length > 0 || groups.upcoming.length > 0;
+
   return (
     <div className="flex flex-col h-screen bg-white text-gray-800 select-none">
       <header className="px-4 py-3 border-b border-gray-200">
@@ -97,7 +132,11 @@ export function App() {
       </header>
 
       <main className="flex-1 overflow-y-auto">
-        {hasAnyTickets ? (
+        {isLoading ? (
+          <LoadingState />
+        ) : error ? (
+          <ErrorState message={error} />
+        ) : hasAnyTickets ? (
           <div className="divide-y divide-gray-100">
             <TicketSection heading="Overdue" tickets={groups.overdue} />
             <TicketSection heading="Today" tickets={groups.today} />

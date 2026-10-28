@@ -1,7 +1,11 @@
+import dotenv from 'dotenv';
 import { app, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { createPopupWindow, createTray } from './tray';
+import { loadCredentials, seedCredentialsFromEnv } from './credentials-store';
+import { fetchJiraTickets } from './jira-client';
+import { groupTickets } from './ticket-grouping';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -14,6 +18,14 @@ if (process.platform === 'darwin') {
 }
 
 app.whenReady().then(() => {
+  // In development, load .env and seed electron-store on first launch if empty.
+  if (!app.isPackaged) {
+    dotenv.config();
+    seedCredentialsFromEnv();
+  }
+
+  const credentials = loadCredentials();
+
   const popupWindow = createPopupWindow({
     devServerUrl: MAIN_WINDOW_VITE_DEV_SERVER_URL,
     filePath: path.join(
@@ -22,15 +34,35 @@ app.whenReady().then(() => {
     ),
   });
 
-  createTray(popupWindow);
+  async function doFetch(): Promise<void> {
+    if (!credentials) {
+      popupWindow.webContents.send('tickets-error', 'No Jira credentials configured');
+      return;
+    }
+    try {
+      const tickets = await fetchJiraTickets(credentials);
+      popupWindow.webContents.send('tickets', tickets);
+
+      const today = new Date().toISOString().slice(0, 10);
+      const { overdue, today: todayTickets } = groupTickets(tickets, today);
+      updateBadge(overdue.length + todayTickets.length);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      popupWindow.webContents.send('tickets-error', message);
+      updateBadge(0);
+    }
+  }
+
+  const { updateBadge } = createTray(popupWindow, {
+    onShow: () => { void doFetch(); },
+  });
 
   ipcMain.on('quit', () => {
     app.quit();
   });
 
-  // 'refresh' is a stub — real data fetching wired in a later ticket.
   ipcMain.on('refresh', () => {
-    /* no-op */
+    void doFetch();
   });
 
   ipcMain.on('open-url', (_, url: string) => {

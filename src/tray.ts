@@ -1,11 +1,86 @@
 import { BrowserWindow, Tray, nativeImage, screen } from 'electron';
+import { deflateSync } from 'node:zlib';
 import path from 'node:path';
 import { computePopupPosition } from './popup-position';
 
 // 16x16 solid-black PNG — used as a macOS template image so the OS
 // automatically renders it correctly in both light and dark menu bars.
-const TRAY_ICON_BASE64 =
+const TRAY_ICON_DEFAULT_BASE64 =
   'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAAAAAA6mKC9AAAADUlEQVR4nGNgGAXIAAABEAABoJMRpQAAAABJRU5ErkJggg==';
+
+// ── PNG construction helpers ────────────────────────────────────────────────
+
+function crc32(buf: Buffer): number {
+  const table = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) {
+      c = c & 1 ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+    }
+    table[i] = c;
+  }
+  let crc = 0xffffffff;
+  for (const byte of buf) {
+    crc = (table[(crc ^ byte) & 0xff] as number) ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function makeChunk(type: string, data: Buffer): Buffer {
+  const typeBytes = Buffer.from(type, 'ascii');
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(data.length, 0);
+  const crcBuf = Buffer.alloc(4);
+  crcBuf.writeUInt32BE(crc32(Buffer.concat([typeBytes, data])), 0);
+  return Buffer.concat([length, typeBytes, data, crcBuf]);
+}
+
+function makeSolidColorPng(width: number, height: number, r: number, g: number, b: number): Buffer {
+  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+  const ihdrData = Buffer.alloc(13);
+  ihdrData.writeUInt32BE(width, 0);
+  ihdrData.writeUInt32BE(height, 4);
+  ihdrData[8] = 8; // bit depth
+  ihdrData[9] = 2; // color type: RGB
+  // compression=0, filter=0, interlace=0
+  const ihdr = makeChunk('IHDR', ihdrData);
+
+  // One scanline = filter byte (0 = None) + RGB pixels
+  const rowSize = 1 + width * 3;
+  const rawData = Buffer.alloc(height * rowSize);
+  for (let y = 0; y < height; y++) {
+    const offset = y * rowSize;
+    rawData[offset] = 0; // filter: None
+    for (let x = 0; x < width; x++) {
+      rawData[offset + 1 + x * 3] = r;
+      rawData[offset + 2 + x * 3] = g;
+      rawData[offset + 3 + x * 3] = b;
+    }
+  }
+  const idat = makeChunk('IDAT', deflateSync(rawData));
+  const iend = makeChunk('IEND', Buffer.alloc(0));
+
+  return Buffer.concat([sig, ihdr, idat, iend]);
+}
+
+// ── Icon creation ───────────────────────────────────────────────────────────
+
+function buildDefaultIcon() {
+  const img = nativeImage
+    .createFromBuffer(Buffer.from(TRAY_ICON_DEFAULT_BASE64, 'base64'))
+    .resize({ width: 16, height: 16 });
+  img.setTemplateImage(true);
+  return img;
+}
+
+function buildAlertIcon() {
+  // Orange square — not a template image so the colour is preserved
+  const png = makeSolidColorPng(16, 16, 255, 149, 0);
+  return nativeImage.createFromBuffer(png).resize({ width: 16, height: 16 });
+}
+
+// ── Public API ──────────────────────────────────────────────────────────────
 
 export function createPopupWindow(opts: {
   devServerUrl: string | undefined;
@@ -35,7 +110,10 @@ export function createPopupWindow(opts: {
   return win;
 }
 
-export function createTray(popupWindow: BrowserWindow): Tray {
+export function createTray(
+  popupWindow: BrowserWindow,
+  opts: { onShow: () => void },
+): { tray: Tray; updateBadge: (count: number) => void } {
   // On macOS, clicking the tray icon while the popup is open fires `blur` on
   // the popup first (hiding it), then fires `tray.click`. Without a guard the
   // click handler would see isVisible()===false and reopen the window instead
@@ -48,12 +126,10 @@ export function createTray(popupWindow: BrowserWindow): Tray {
     popupWindow.hide();
   });
 
-  const icon = nativeImage
-    .createFromBuffer(Buffer.from(TRAY_ICON_BASE64, 'base64'))
-    .resize({ width: 16, height: 16 });
-  icon.setTemplateImage(true);
+  const defaultIcon = buildDefaultIcon();
+  const alertIcon = buildAlertIcon();
 
-  const tray = new Tray(icon);
+  const tray = new Tray(defaultIcon);
   tray.setToolTip('Jira Tray');
 
   tray.on('click', (_event, bounds) => {
@@ -80,7 +156,13 @@ export function createTray(popupWindow: BrowserWindow): Tray {
     popupWindow.setPosition(x, y);
     popupWindow.show();
     popupWindow.focus();
+    opts.onShow();
   });
 
-  return tray;
+  function updateBadge(count: number): void {
+    tray.setTitle(count > 0 ? String(count) : '');
+    tray.setImage(count > 0 ? alertIcon : defaultIcon);
+  }
+
+  return { tray, updateBadge };
 }
