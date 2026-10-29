@@ -122,7 +122,7 @@ export function App() {
     groups.overdue.length > 0 || groups.today.length > 0 || groups.upcoming.length > 0 || groups.noDate.length > 0;
 
   return (
-    <div className="flex flex-col h-screen bg-white text-gray-800 select-none">
+    <div className="app-container flex flex-col h-screen bg-white text-gray-800 select-none">
       <header className="px-4 py-3 border-b border-gray-200">
         <h1 className="text-sm font-semibold">Jira Tray</h1>
       </header>
