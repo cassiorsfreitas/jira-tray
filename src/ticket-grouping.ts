@@ -4,16 +4,19 @@ export interface GroupedTickets {
   overdue: Ticket[];
   today: Ticket[];
   upcoming: Ticket[];
+  noDate: Ticket[];
 }
 
 export function groupTickets(tickets: Ticket[], today: string): GroupedTickets {
   const overdue: Ticket[] = [];
   const todayGroup: Ticket[] = [];
   const upcoming: Ticket[] = [];
+  const noDate: Ticket[] = [];
 
   for (const ticket of tickets) {
-    if (!ticket.dueDate) continue;
-    if (ticket.dueDate < today) {
+    if (!ticket.dueDate) {
+      noDate.push(ticket);
+    } else if (ticket.dueDate < today) {
       overdue.push(ticket);
     } else if (ticket.dueDate === today) {
       todayGroup.push(ticket);
@@ -22,5 +25,5 @@ export function groupTickets(tickets: Ticket[], today: string): GroupedTickets {
     }
   }
 
-  return { overdue, today: todayGroup, upcoming };
+  return { overdue, today: todayGroup, upcoming, noDate };
 }

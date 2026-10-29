@@ -116,10 +116,10 @@ export function App() {
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  const groups = tickets ? groupTickets(tickets, today) : { overdue: [], today: [], upcoming: [] };
+  const groups = tickets ? groupTickets(tickets, today) : { overdue: [], today: [], upcoming: [], noDate: [] };
   const isLoading = tickets === null && error === null;
   const hasAnyTickets =
-    groups.overdue.length > 0 || groups.today.length > 0 || groups.upcoming.length > 0;
+    groups.overdue.length > 0 || groups.today.length > 0 || groups.upcoming.length > 0 || groups.noDate.length > 0;
 
   return (
     <div className="flex flex-col h-screen bg-white text-gray-800 select-none">
@@ -137,6 +137,7 @@ export function App() {
             <TicketSection heading="Overdue" tickets={groups.overdue} />
             <TicketSection heading="Today" tickets={groups.today} />
             <TicketSection heading="Upcoming" tickets={groups.upcoming} />
+            <TicketSection heading="No due date" tickets={groups.noDate} />
           </div>
         ) : (
           <EmptyState />

@@ -32,9 +32,10 @@ describe('groupTickets', () => {
     expect(upcoming).toEqual([ticket]);
   });
 
-  it('excludes a ticket with null dueDate from all groups', () => {
+  it('puts a ticket with null dueDate into noDate', () => {
     const ticket: Ticket = { ...base, key: 'PROJ-4', dueDate: null };
     const groups = groupTickets([ticket], TODAY);
+    expect(groups.noDate).toEqual([ticket]);
     expect(groups.overdue).toEqual([]);
     expect(groups.today).toEqual([]);
     expect(groups.upcoming).toEqual([]);
@@ -45,6 +46,7 @@ describe('groupTickets', () => {
     expect(groups.overdue).toEqual([]);
     expect(groups.today).toEqual([]);
     expect(groups.upcoming).toEqual([]);
+    expect(groups.noDate).toEqual([]);
   });
 
   it('correctly partitions a mixed list of overdue, today, upcoming, and null-date tickets', () => {
@@ -61,5 +63,6 @@ describe('groupTickets', () => {
     expect(groups.overdue).toEqual([overdueTicket]);
     expect(groups.today).toEqual([todayTicket]);
     expect(groups.upcoming).toEqual([upcomingTicket]);
+    expect(groups.noDate).toEqual([noDateTicket]);
   });
 });
