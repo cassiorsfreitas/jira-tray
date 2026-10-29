@@ -1,48 +1,47 @@
 import { useState, useEffect } from 'react';
-import type { Ticket, StatusCategory, Priority } from './jira-client';
+import type { Ticket } from './jira-client';
 import { groupTickets } from './ticket-grouping';
-
-// ── Colour maps ────────────────────────────────────────────────────────────────
-
-const STATUS_PILL_CLASSES: Record<StatusCategory, string> = {
-  todo: 'bg-gray-200 text-gray-600',
-  inprogress: 'bg-blue-100 text-blue-700',
-  inreview: 'bg-purple-100 text-purple-700',
-  done: 'bg-green-100 text-green-700',
-};
-
-const PRIORITY_BORDER_CLASSES: Record<Priority, string> = {
-  highest: 'border-l-red-500',
-  high: 'border-l-orange-500',
-  medium: 'border-l-yellow-500',
-  low: 'border-l-blue-400',
-  lowest: 'border-l-gray-400',
-};
+import { priorityColor, statusPillStyle } from './ui-maps';
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
-
-function StatusPill({ statusCategory, status }: { statusCategory: StatusCategory; status: string }) {
-  return (
-    <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium leading-none whitespace-nowrap shrink-0 ${STATUS_PILL_CLASSES[statusCategory]}`}>
-      {status}
-    </span>
-  );
-}
 
 function TicketRow({ ticket }: { ticket: Ticket }) {
   function handleClick() {
     window.electronAPI.openUrl(ticket.url);
   }
 
+  const pill = statusPillStyle(ticket.statusCategory);
+
   return (
     <button
       onClick={handleClick}
-      className={`w-full text-left flex items-center gap-2 px-3 py-2 border-l-4 ${PRIORITY_BORDER_CLASSES[ticket.priority]} hover:bg-gray-50 focus:outline-none focus:bg-gray-50`}
+      className="w-full text-left flex items-center gap-3 px-3 min-h-[44px] hover:bg-gray-50 focus:outline-none focus:bg-gray-50"
     >
+      <span
+        style={{
+          width: 4,
+          height: 4,
+          borderRadius: '50%',
+          backgroundColor: priorityColor(ticket.priority),
+          flexShrink: 0,
+        }}
+      />
       <span className="text-[11px] font-mono text-gray-400 shrink-0">{ticket.key}</span>
       <span className="flex-1 text-xs text-gray-800 truncate min-w-0">{ticket.title}</span>
-      <StatusPill statusCategory={ticket.statusCategory} status={ticket.status} />
-      <span className="text-[11px] text-gray-400 shrink-0">{ticket.dueDate}</span>
+      <span
+        style={{
+          border: `1px solid ${pill.border}`,
+          color: pill.text,
+          fontSize: 10,
+          lineHeight: 1,
+          padding: '2px 6px',
+          borderRadius: 4,
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
+        }}
+      >
+        {ticket.status}
+      </span>
     </button>
   );
 }
