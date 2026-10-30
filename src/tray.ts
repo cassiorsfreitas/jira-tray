@@ -170,6 +170,7 @@ export function createTray(
     );
     popupWindow.setPosition(x, y);
     popupWindow.show();
+    popupWindow.webContents.send('window-show');
     popupWindow.focus();
     opts.onShow();
   });

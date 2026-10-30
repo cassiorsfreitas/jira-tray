@@ -110,25 +110,26 @@ function TicketSection({ heading, tickets, overdue = false }: { heading: string;
 
 function LoadingState() {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-6">
-      <p className="text-sm text-gray-400">Loading…</p>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8 }}>
+      <div className="spinner" />
+      <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>Loading…</p>
     </div>
   );
 }
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-6 gap-1">
-      <p className="text-xs font-semibold text-red-600">Failed to load tickets</p>
-      <p className="text-xs text-gray-500 break-all">{message}</p>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', padding: '0 24px', gap: 4 }}>
+      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-red)', margin: 0 }}>Failed to load tickets</p>
+      <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, wordBreak: 'break-all' }}>{message}</p>
     </div>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-6">
-      <p className="text-sm text-gray-500">You're all caught up</p>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>You're all caught up</p>
     </div>
   );
 }

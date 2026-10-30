@@ -11,4 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onTicketsError: (callback: (message: string) => void) => {
     ipcRenderer.on('tickets-error', (_event, message: string) => callback(message));
   },
+  onWindowShow: (callback: () => void) => {
+    ipcRenderer.on('window-show', () => callback());
+  },
 });

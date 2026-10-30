@@ -12,5 +12,6 @@ interface Window {
     openUrl: (url: string) => void;
     onTickets: (callback: (tickets: import('./jira-client').Ticket[]) => void) => void;
     onTicketsError: (callback: (message: string) => void) => void;
+    onWindowShow: (callback: () => void) => void;
   };
 }
