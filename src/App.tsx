@@ -96,7 +96,7 @@ function TicketSection({ heading, tickets, overdue = false, accentColor }: { hea
 
 function LoadingState() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 41px)', gap: 8 }}>
       <div className="spinner" />
       <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>Loading…</p>
     </div>
@@ -189,22 +189,24 @@ export function App() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto overflow-x-hidden">
-        {isLoading ? (
-          <LoadingState />
-        ) : error ? (
-          <ErrorState message={error} />
-        ) : hasAnyTickets ? (
-          <div style={{ padding: '0 8px 8px' }}>
-            <TicketSection heading="Overdue" tickets={groups.overdue} overdue accentColor="var(--accent-red)" />
-            <TicketSection heading="Today" tickets={groups.today} accentColor="var(--accent-yellow)" />
-            <TicketSection heading="Upcoming" tickets={groups.upcoming} accentColor="var(--accent-yellow)" />
-            <TicketSection heading="No due date" tickets={groups.noDate} accentColor="var(--text-secondary)" />
-          </div>
-        ) : (
-          <EmptyState />
-        )}
-      </main>
+      {isLoading ? (
+        <LoadingState />
+      ) : (
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          {error ? (
+            <ErrorState message={error} />
+          ) : hasAnyTickets ? (
+            <div style={{ padding: '0 8px 8px' }}>
+              <TicketSection heading="Overdue" tickets={groups.overdue} overdue accentColor="var(--accent-red)" />
+              <TicketSection heading="Today" tickets={groups.today} accentColor="var(--accent-yellow)" />
+              <TicketSection heading="Upcoming" tickets={groups.upcoming} accentColor="var(--accent-yellow)" />
+              <TicketSection heading="No due date" tickets={groups.noDate} accentColor="var(--text-secondary)" />
+            </div>
+          ) : (
+            <EmptyState />
+          )}
+        </main>
+      )}
     </div>
   );
 }

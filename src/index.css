@@ -2,7 +2,7 @@
   --canvas: #07080a;
   --surface-0: #101111;
   --surface-1: #1c1d1e;
-  --border: #242728;
+  --border: rgba(255, 255, 255, 0.07);
   --text-primary: #f9f9f9;
   --text-secondary: #9c9c9d;
   --accent-blue: #57c1ff;
@@ -69,6 +69,4 @@ body {
   background: rgba(255, 255, 255, 0.05);
 }
 
-.ticket-list li:not(:last-child) {
-  border-bottom: 1px solid var(--border);
-}
+
