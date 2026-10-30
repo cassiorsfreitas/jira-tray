@@ -9,6 +9,7 @@ const base: Omit<Ticket, 'dueDate'> = {
   statusCategory: 'inprogress',
   priority: 'medium',
   url: 'https://example.atlassian.net/browse/PROJ-1',
+  board: 'Example Project',
 };
 
 const TODAY = '2026-10-26';

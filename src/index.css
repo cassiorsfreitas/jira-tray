@@ -15,6 +15,7 @@
 html,
 body {
   background: transparent;
+  overflow-x: hidden;
 }
 
 body {
@@ -54,4 +55,19 @@ body {
   border-radius: 12px;
   -electron-corner-smoothing: 60%;
   animation: popup-enter 120ms ease-out both;
+  overflow: hidden;
+}
+
+.ticket-row {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.ticket-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ticket-list li:not(:last-child) {
+  border-bottom: 1px solid var(--border);
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Ticket } from './jira-client';
 import { groupTickets } from './ticket-grouping';
-import { priorityColor, statusPillStyle } from './ui-maps';
+import { statusPillStyle } from './ui-maps';
 
 // ── Icons ───────────────────────────────────────────────────────────────────
 
@@ -36,53 +36,39 @@ function QuitIcon() {
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function TicketRow({ ticket }: { ticket: Ticket }) {
-  function handleClick() {
-    window.electronAPI.openUrl(ticket.url);
-  }
-
+function TicketRow({ ticket, accentColor }: { ticket: Ticket; accentColor: string }) {
   const pill = statusPillStyle(ticket.statusCategory);
 
   return (
     <button
-      onClick={handleClick}
-      className="w-full text-left flex items-center gap-3 px-3 min-h-[44px] hover:bg-gray-50 focus:outline-none focus:bg-gray-50"
+      onClick={() => window.electronAPI.openUrl(ticket.url)}
+      className="ticket-row focus:outline-none"
+      style={{ display: 'flex', alignItems: 'stretch', width: '100%', boxSizing: 'border-box', gap: 10, padding: '9px 10px', textAlign: 'left' }}
     >
-      <span
-        style={{
-          width: 4,
-          height: 4,
-          borderRadius: '50%',
-          backgroundColor: priorityColor(ticket.priority),
-          flexShrink: 0,
-        }}
-      />
-      <span className="text-[11px] font-mono text-gray-400 shrink-0">{ticket.key}</span>
-      <span className="flex-1 text-xs text-gray-800 truncate min-w-0">{ticket.title}</span>
-      <span
-        style={{
-          border: `1px solid ${pill.border}`,
-          color: pill.text,
-          fontSize: 10,
-          lineHeight: 1,
-          padding: '2px 6px',
-          borderRadius: 4,
-          whiteSpace: 'nowrap',
-          flexShrink: 0,
-        }}
-      >
-        {ticket.status}
-      </span>
+      <span style={{ width: 3, borderRadius: 2, flexShrink: 0, backgroundColor: accentColor }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, overflow: 'hidden' }}>
+          <span style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: 'var(--text-secondary)', flexShrink: 0, lineHeight: '1.4' }}>
+            {ticket.key}
+          </span>
+          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1.4' }}>
+            {ticket.title}
+          </span>
+        </div>
+        <span style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1.3', marginTop: 2 }}>
+          {ticket.board} – <span style={{ color: pill.text }}>{ticket.status}</span>
+        </span>
+      </div>
     </button>
   );
 }
 
-function TicketSection({ heading, tickets, overdue = false }: { heading: string; tickets: Ticket[]; overdue?: boolean }) {
+function TicketSection({ heading, tickets, overdue = false, accentColor }: { heading: string; tickets: Ticket[]; overdue?: boolean; accentColor: string }) {
   if (tickets.length === 0) return null;
 
   return (
     <section>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px 4px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 4px 4px' }}>
         <span
           style={{
             fontSize: 10,
@@ -97,10 +83,10 @@ function TicketSection({ heading, tickets, overdue = false }: { heading: string;
         </span>
         <div style={{ flex: 1, borderBottom: '1px solid var(--border)' }} />
       </div>
-      <ul>
+      <ul className="ticket-list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {tickets.map((ticket) => (
           <li key={ticket.key}>
-            <TicketRow ticket={ticket} />
+            <TicketRow ticket={ticket} accentColor={accentColor} />
           </li>
         ))}
       </ul>
@@ -140,6 +126,12 @@ export function App() {
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  function handleRefresh() {
+    setTickets(null);
+    setError(null);
+    window.electronAPI.refresh();
+  }
+
   useEffect(() => {
     window.electronAPI.onTickets((incoming) => {
       setTickets(incoming);
@@ -148,6 +140,22 @@ export function App() {
     window.electronAPI.onTicketsError((message) => {
       setError(message);
     });
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.metaKey && e.key === 'r') {
+        e.preventDefault();
+        setTickets(null);
+        setError(null);
+        window.electronAPI.refresh();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+
+    window.electronAPI.onWindowShow(() => {
+      (document.activeElement as HTMLElement)?.blur();
+    });
+
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
   const today = new Date().toISOString().slice(0, 10);
@@ -158,54 +166,45 @@ export function App() {
 
   return (
     <div className="app-container flex flex-col h-screen select-none">
-      <header style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 12px', color: 'var(--text-secondary)' }}>
-        <JiraIcon />
-        <span style={{ fontSize: 12, fontWeight: 600 }}>Jira Tray</span>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', color: 'var(--text-secondary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <JiraIcon />
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Jira Tray</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={handleRefresh}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'inherit', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <RefreshIcon />
+            <span style={{ fontSize: 11 }}>⌘R</span>
+          </button>
+          <button
+            onClick={() => window.electronAPI.quit()}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'inherit', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <QuitIcon />
+            <span style={{ fontSize: 11 }}>⌘Q</span>
+          </button>
+        </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden">
         {isLoading ? (
           <LoadingState />
         ) : error ? (
           <ErrorState message={error} />
         ) : hasAnyTickets ? (
-          <div>
-            <TicketSection heading="Overdue" tickets={groups.overdue} overdue />
-            <TicketSection heading="Today" tickets={groups.today} />
-            <TicketSection heading="Upcoming" tickets={groups.upcoming} />
-            <TicketSection heading="No due date" tickets={groups.noDate} />
+          <div style={{ padding: '0 8px 8px' }}>
+            <TicketSection heading="Overdue" tickets={groups.overdue} overdue accentColor="var(--accent-red)" />
+            <TicketSection heading="Today" tickets={groups.today} accentColor="var(--accent-yellow)" />
+            <TicketSection heading="Upcoming" tickets={groups.upcoming} accentColor="var(--accent-yellow)" />
+            <TicketSection heading="No due date" tickets={groups.noDate} accentColor="var(--text-secondary)" />
           </div>
         ) : (
           <EmptyState />
         )}
       </main>
-
-      <footer
-        style={{
-          borderTop: '1px solid var(--border)',
-          background: 'var(--surface-1)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          padding: '8px 10px',
-          color: 'var(--text-secondary)',
-        }}
-      >
-        <button
-          onClick={() => window.electronAPI.refresh()}
-          style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'inherit', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-        >
-          <RefreshIcon />
-          <span style={{ fontSize: 11 }}>⌘R</span>
-        </button>
-        <button
-          onClick={() => window.electronAPI.quit()}
-          style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'inherit', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-        >
-          <QuitIcon />
-          <span style={{ fontSize: 11 }}>⌘Q</span>
-        </button>
-      </footer>
     </div>
   );
 }

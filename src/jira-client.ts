@@ -9,6 +9,7 @@ export interface Ticket {
   priority: Priority;
   dueDate: string | null;
   url: string;
+  board: string;
 }
 
 export interface JiraCredentials {
@@ -17,7 +18,8 @@ export interface JiraCredentials {
   token: string;
 }
 
-const JQL = 'assignee = currentUser() AND statusCategory != Done ORDER BY due ASC';
+const JQL =
+  'assignee = currentUser() AND statusCategory != Done AND status != "Refinement" ORDER BY due ASC';
 
 function mapStatusCategory(key: string): StatusCategory {
   switch (key) {
@@ -57,6 +59,7 @@ interface JiraIssue {
     };
     priority: { name: string };
     duedate?: string | null;
+    project: { name: string };
   };
 }
 
@@ -68,7 +71,7 @@ export async function fetchJiraTickets({ domain, email, token }: JiraCredentials
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ jql: JQL, fields: ['summary', 'status', 'priority', 'duedate'] }),
+    body: JSON.stringify({ jql: JQL, fields: ['summary', 'status', 'priority', 'duedate', 'project'] }),
   });
 
   if (!response.ok) {
@@ -85,5 +88,6 @@ export async function fetchJiraTickets({ domain, email, token }: JiraCredentials
     priority: mapPriority(issue.fields.priority.name),
     dueDate: issue.fields.duedate ?? null,
     url: `https://${domain}/browse/${issue.key}`,
+    board: issue.fields.project.name,
   }));
 }

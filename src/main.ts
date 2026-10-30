@@ -53,6 +53,13 @@ app.whenReady().then(() => {
     }
   }
 
+  // Re-fetch after a renderer reload (e.g. Cmd+R) when the window is already visible.
+  popupWindow.webContents.on('did-finish-load', () => {
+    if (popupWindow.isVisible()) {
+      void doFetch();
+    }
+  });
+
   const { updateBadge } = createTray(popupWindow, {
     onShow: () => { void doFetch(); },
   });
