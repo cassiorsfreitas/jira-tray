@@ -3,6 +3,37 @@ import type { Ticket } from './jira-client';
 import { groupTickets } from './ticket-grouping';
 import { priorityColor, statusPillStyle } from './ui-maps';
 
+// ── Icons ───────────────────────────────────────────────────────────────────
+
+function JiraIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="2" width="13" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="4.5" y1="6" x2="11.5" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="4.5" y1="8.5" x2="11.5" y2="8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="4.5" y1="11" x2="9.5" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RefreshIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5" />
+      <path d="M13.5 2.5v5.5h-5.5" />
+    </svg>
+  );
+}
+
+function QuitIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10.5 8H2.5M5.5 5l-3 3 3 3" />
+      <path d="M8 3h4a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H8" />
+    </svg>
+  );
+}
+
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function TicketRow({ ticket }: { ticket: Ticket }) {
@@ -46,14 +77,26 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
   );
 }
 
-function TicketSection({ heading, tickets }: { heading: string; tickets: Ticket[] }) {
+function TicketSection({ heading, tickets, overdue = false }: { heading: string; tickets: Ticket[]; overdue?: boolean }) {
   if (tickets.length === 0) return null;
 
   return (
     <section>
-      <h2 className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-        {heading}
-      </h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px 4px' }}>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            color: overdue ? 'var(--accent-red)' : 'var(--text-secondary)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {heading}
+        </span>
+        <div style={{ flex: 1, borderBottom: '1px solid var(--border)' }} />
+      </div>
       <ul>
         {tickets.map((ticket) => (
           <li key={ticket.key}>
@@ -106,14 +149,6 @@ export function App() {
     });
   }, []);
 
-  function handleQuit() {
-    window.electronAPI.quit();
-  }
-
-  function handleRefresh() {
-    window.electronAPI.refresh();
-  }
-
   const today = new Date().toISOString().slice(0, 10);
   const groups = tickets ? groupTickets(tickets, today) : { overdue: [], today: [], upcoming: [], noDate: [] };
   const isLoading = tickets === null && error === null;
@@ -121,9 +156,10 @@ export function App() {
     groups.overdue.length > 0 || groups.today.length > 0 || groups.upcoming.length > 0 || groups.noDate.length > 0;
 
   return (
-    <div className="app-container flex flex-col h-screen bg-white text-gray-800 select-none">
-      <header className="px-4 py-3 border-b border-gray-200">
-        <h1 className="text-sm font-semibold">Jira Tray</h1>
+    <div className="app-container flex flex-col h-screen select-none">
+      <header style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 12px', color: 'var(--text-secondary)' }}>
+        <JiraIcon />
+        <span style={{ fontSize: 12, fontWeight: 600 }}>Jira Tray</span>
       </header>
 
       <main className="flex-1 overflow-y-auto">
@@ -132,8 +168,8 @@ export function App() {
         ) : error ? (
           <ErrorState message={error} />
         ) : hasAnyTickets ? (
-          <div className="divide-y divide-gray-100">
-            <TicketSection heading="Overdue" tickets={groups.overdue} />
+          <div>
+            <TicketSection heading="Overdue" tickets={groups.overdue} overdue />
             <TicketSection heading="Today" tickets={groups.today} />
             <TicketSection heading="Upcoming" tickets={groups.upcoming} />
             <TicketSection heading="No due date" tickets={groups.noDate} />
@@ -143,18 +179,30 @@ export function App() {
         )}
       </main>
 
-      <footer className="flex items-center justify-between px-4 py-2 border-t border-gray-200">
+      <footer
+        style={{
+          borderTop: '1px solid var(--border)',
+          background: 'var(--surface-1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          padding: '8px 10px',
+          color: 'var(--text-secondary)',
+        }}
+      >
         <button
-          onClick={handleRefresh}
-          className="text-xs text-blue-600 hover:text-blue-800 focus:outline-none"
+          onClick={() => window.electronAPI.refresh()}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'inherit', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          Refresh
+          <RefreshIcon />
+          <span style={{ fontSize: 11 }}>⌘R</span>
         </button>
         <button
-          onClick={handleQuit}
-          className="text-xs text-red-600 hover:text-red-800 focus:outline-none"
+          onClick={() => window.electronAPI.quit()}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'inherit', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          Quit
+          <QuitIcon />
+          <span style={{ fontSize: 11 }}>⌘Q</span>
         </button>
       </footer>
     </div>
