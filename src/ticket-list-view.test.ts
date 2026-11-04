@@ -117,3 +117,69 @@ describe('buildTicketListView due date badge', () => {
     expect(badges([ticket('A', null)])).toEqual([null]);
   });
 });
+
+describe('buildTicketListView Sync State', () => {
+  const NOW = Date.parse('2026-10-26T12:00:00Z');
+  const MINUTE = 60_000;
+
+  function syncState(sync: {
+    lastSyncedAt?: number | null;
+    lastAttemptFailed?: boolean;
+    now?: number;
+  }) {
+    return buildTicketListView({ tickets: [], today: TODAY, ...sync })
+      .syncState;
+  }
+
+  it('reads "Synced just now" right after a successful fetch', () => {
+    expect(syncState({ lastSyncedAt: NOW, now: NOW })).toEqual({
+      label: 'Synced just now',
+      failed: false,
+    });
+  });
+
+  it('still reads "Synced just now" just under a minute later', () => {
+    expect(syncState({ lastSyncedAt: NOW, now: NOW + MINUTE - 1 })).toEqual({
+      label: 'Synced just now',
+      failed: false,
+    });
+  });
+
+  it('reads "Synced 1m ago" after a minute', () => {
+    expect(syncState({ lastSyncedAt: NOW, now: NOW + MINUTE })?.label).toBe(
+      'Synced 1m ago',
+    );
+  });
+
+  it('ages to "Synced Nm ago", rounding down to whole minutes', () => {
+    expect(
+      syncState({ lastSyncedAt: NOW, now: NOW + 2 * MINUTE + 59_000 })?.label,
+    ).toBe('Synced 2m ago');
+    expect(
+      syncState({ lastSyncedAt: NOW, now: NOW + 45 * MINUTE })?.label,
+    ).toBe('Synced 45m ago');
+  });
+
+  it('does not go negative if the clock moves backwards', () => {
+    expect(syncState({ lastSyncedAt: NOW, now: NOW - 5 * MINUTE })?.label).toBe(
+      'Synced just now',
+    );
+  });
+
+  it('reads "Sync failed" when the last attempt failed', () => {
+    expect(
+      syncState({ lastSyncedAt: NOW, lastAttemptFailed: true, now: NOW }),
+    ).toEqual({ label: 'Sync failed', failed: true });
+  });
+
+  it('reads "Sync failed" when the first attempt failed', () => {
+    expect(
+      syncState({ lastSyncedAt: null, lastAttemptFailed: true, now: NOW }),
+    ).toEqual({ label: 'Sync failed', failed: true });
+  });
+
+  it('has no Sync State before the first attempt completes', () => {
+    expect(syncState({ lastSyncedAt: null, now: NOW })).toBeNull();
+    expect(syncState({})).toBeNull();
+  });
+});
