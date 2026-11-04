@@ -404,7 +404,7 @@ function FilterTabRow({
             color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
             backgroundColor: selected ? 'var(--surface-1)' : 'transparent',
             border: `1px solid ${selected ? 'var(--border)' : 'transparent'}`,
-            borderRadius: 12,
+            borderRadius: 6,
           }}
         >
           {label}
