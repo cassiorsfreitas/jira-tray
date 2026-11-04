@@ -25,11 +25,24 @@ export interface TicketListViewInput {
   today: string;
   /** Free text typed in the search field. Absent or blank means no search. */
   searchText?: string;
+  /** Time of the last successful fetch, in epoch milliseconds. */
+  lastSyncedAt?: number | null;
+  /** Whether the most recent fetch attempt failed. */
+  lastAttemptFailed?: boolean;
+  /** Current time in epoch milliseconds, used to age the Sync State. */
+  now?: number;
+}
+
+export interface SyncState {
+  label: string;
+  failed: boolean;
 }
 
 export interface TicketListView {
   rows: TicketRow[];
   emptyReason: EmptyReason;
+  /** Null before the first fetch attempt completes. */
+  syncState: SyncState | null;
 }
 
 /**
@@ -105,12 +118,36 @@ function emptyReasonFor(
   return { kind: 'noSearchMatch' };
 }
 
+// ── Sync State ─────────────────────────────────────────────────────────────
+
+const MS_PER_MINUTE = 60_000;
+
+function computeSyncState({
+  lastSyncedAt,
+  lastAttemptFailed,
+  now,
+}: Pick<
+  TicketListViewInput,
+  'lastSyncedAt' | 'lastAttemptFailed' | 'now'
+>): SyncState | null {
+  if (lastAttemptFailed) return { label: 'Sync failed', failed: true };
+  if (lastSyncedAt == null || now === undefined) return null;
+  const minutes = Math.floor((now - lastSyncedAt) / MS_PER_MINUTE);
+  return {
+    label: minutes < 1 ? 'Synced just now' : `Synced ${minutes}m ago`,
+    failed: false,
+  };
+}
+
 // ── Entry point ────────────────────────────────────────────────────────────
 
 export function buildTicketListView({
   tickets,
   today,
   searchText,
+  lastSyncedAt,
+  lastAttemptFailed,
+  now,
 }: TicketListViewInput): TicketListView {
   const query = (searchText ?? '').trim().toLowerCase();
   const searched = query
@@ -126,5 +163,9 @@ export function buildTicketListView({
     })),
   );
 
-  return { rows, emptyReason: emptyReasonFor(tickets, rows) };
+  return {
+    rows,
+    emptyReason: emptyReasonFor(tickets, rows),
+    syncState: computeSyncState({ lastSyncedAt, lastAttemptFailed, now }),
+  };
 }

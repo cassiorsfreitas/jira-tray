@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Ticket } from './jira-client';
 import { buildTicketListView } from './ticket-list-view';
-import type { TicketRow as TicketRowData } from './ticket-list-view';
+import type { SyncState, TicketRow as TicketRowData } from './ticket-list-view';
 import { badgeToneColor, groupAccentColor, statusPillStyle } from './ui-maps';
 
 // ── Icons ───────────────────────────────────────────────────────────────────
@@ -291,7 +291,7 @@ function LoadingState() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        flex: 1,
+        height: '100%',
         gap: 8,
       }}
     >
@@ -375,13 +375,57 @@ function EmptyState() {
   );
 }
 
+function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
+  const failed = syncState?.failed ?? false;
+  return (
+    <footer
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        flexShrink: 0,
+        height: 28,
+        boxSizing: 'border-box',
+        padding: '0 12px',
+        borderTop: '1px solid var(--border)',
+        fontSize: 11,
+        color: failed ? 'var(--accent-red)' : 'var(--text-secondary)',
+      }}
+    >
+      {syncState && (
+        <>
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              flexShrink: 0,
+              backgroundColor: failed
+                ? 'var(--accent-red)'
+                : 'var(--text-secondary)',
+            }}
+          />
+          <span style={{ fontWeight: failed ? 600 : 400 }}>
+            {syncState.label}
+          </span>
+        </>
+      )}
+    </footer>
+  );
+}
+
 // ── Root component ─────────────────────────────────────────────────────────────
+
+const SYNC_STATE_TICK_MS = 15_000;
 
 export function App() {
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
+  const [lastErrorAt, setLastErrorAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   function handleRefresh() {
     setTickets(null);
@@ -391,11 +435,17 @@ export function App() {
 
   useEffect(() => {
     window.electronAPI.onTickets((incoming) => {
+      const receivedAt = Date.now();
       setTickets(incoming);
       setError(null);
+      setLastSyncedAt(receivedAt);
+      setNow(receivedAt);
     });
     window.electronAPI.onTicketsError((message) => {
+      const failedAt = Date.now();
       setError(message);
+      setLastErrorAt(failedAt);
+      setNow(failedAt);
     });
 
     function onKeyDown(e: KeyboardEvent) {
@@ -416,16 +466,32 @@ export function App() {
     window.electronAPI.onWindowShow(() => {
       (document.activeElement as HTMLElement)?.blur();
       setSearchText('');
+      setNow(Date.now());
     });
 
-    return () => window.removeEventListener('keydown', onKeyDown);
+    // Re-evaluate the Sync State label while the Popup is visible so
+    // "Synced 2m ago" keeps ageing.
+    const ageTimer = setInterval(() => {
+      if (!document.hidden) setNow(Date.now());
+    }, SYNC_STATE_TICK_MS);
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      clearInterval(ageTimer);
+    };
   }, []);
 
   const today = new Date().toISOString().slice(0, 10);
-  const { rows, emptyReason } = buildTicketListView({
+  const lastAttemptFailed =
+    lastErrorAt !== null &&
+    (lastSyncedAt === null || lastErrorAt > lastSyncedAt);
+  const { rows, emptyReason, syncState } = buildTicketListView({
     tickets: tickets ?? [],
     today,
     searchText,
+    lastSyncedAt,
+    lastAttemptFailed,
+    now,
   });
   const isLoading = tickets === null && error === null;
 
@@ -436,7 +502,8 @@ export function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '10px 12px',
+          padding: '8px 12px',
+          flexShrink: 0,
           color: 'var(--text-secondary)',
         }}
       >
@@ -487,9 +554,11 @@ export function App() {
       />
 
       {isLoading ? (
-        <LoadingState />
+        <main className="flex-1 min-h-0">
+          <LoadingState />
+        </main>
       ) : (
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
           {error ? (
             <ErrorState message={error} />
           ) : rows.length > 0 ? (
@@ -510,6 +579,8 @@ export function App() {
           )}
         </main>
       )}
+
+      <SyncStateFooter syncState={syncState} />
     </div>
   );
 }
