@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTicketListView } from './ticket-list-view';
+import { buildTicketListView, SORT_ORDER_OPTIONS } from './ticket-list-view';
 import type { FilterTab } from './ticket-list-view';
 import type { Ticket } from './jira-client';
 
@@ -10,6 +10,7 @@ const base: Omit<Ticket, 'key' | 'dueDate'> = {
   priority: 'medium',
   url: 'https://example.atlassian.net/browse/PROJ-1',
   board: 'Example Project',
+  created: '2026-10-01T09:30:00.000+0000',
 };
 
 const TODAY = '2026-10-26';
@@ -222,6 +223,126 @@ describe('buildTicketListView emptyReason', () => {
     expect(emptyReason([ticket('A-1', null)], 'zzz')).toEqual({
       kind: 'noSearchMatch',
     });
+  });
+});
+
+describe('buildTicketListView Sort Order', () => {
+  function created(key: string, dueDate: string | null, at: string): Ticket {
+    return { ...base, key, dueDate, created: at };
+  }
+
+  function sortedKeys(
+    tickets: Ticket[],
+    sortOrder?: 'dueDate' | 'newest',
+  ): string[] {
+    return buildTicketListView({ tickets, today: TODAY, sortOrder }).rows.map(
+      (row) => row.ticket.key,
+    );
+  }
+
+  const mixed = [
+    created('OVERDUE-OLD', '2026-10-01', '2026-09-01T10:00:00.000+0000'),
+    created('NO-DATE-NEW', null, '2026-10-20T10:00:00.000+0000'),
+    created('TODAY-MID', TODAY, '2026-10-10T10:00:00.000+0000'),
+    created('UPCOMING-NEWEST', '2026-11-05', '2026-10-25T10:00:00.000+0000'),
+  ];
+
+  it('filters by search text before sorting, and reports no match', () => {
+    const tickets = [
+      created('ABC-1', null, '2026-10-01T10:00:00.000+0000'),
+      created('ABC-2', '2026-10-01', '2026-10-05T10:00:00.000+0000'),
+      created('XYZ-3', null, '2026-10-20T10:00:00.000+0000'),
+    ];
+    const view = (searchText: string) =>
+      buildTicketListView({
+        tickets,
+        today: TODAY,
+        searchText,
+        sortOrder: 'newest',
+      });
+    expect(view('abc').rows.map((row) => row.ticket.key)).toEqual([
+      'ABC-2',
+      'ABC-1',
+    ]);
+    expect(view('nope').emptyReason).toEqual({ kind: 'noSearchMatch' });
+  });
+
+  it('defaults to the Due date order', () => {
+    expect(sortedKeys(mixed)).toEqual([
+      'OVERDUE-OLD',
+      'TODAY-MID',
+      'UPCOMING-NEWEST',
+      'NO-DATE-NEW',
+    ]);
+  });
+
+  it('keeps the urgency ordering for the Due date Sort Order', () => {
+    expect(sortedKeys(mixed, 'dueDate')).toEqual(sortedKeys(mixed));
+  });
+
+  it('orders by creation date descending for Newest first, regardless of Ticket Group', () => {
+    expect(sortedKeys(mixed, 'newest')).toEqual([
+      'UPCOMING-NEWEST',
+      'NO-DATE-NEW',
+      'TODAY-MID',
+      'OVERDUE-OLD',
+    ]);
+  });
+
+  it('compares creation instants rather than text across UTC offsets', () => {
+    const result = sortedKeys(
+      [
+        // 10:00 at +0000 is earlier than 09:00 at -0300 (12:00 UTC)
+        created('EARLIER', null, '2026-10-10T10:00:00.000+0000'),
+        created('LATER', null, '2026-10-10T09:00:00.000-0300'),
+      ],
+      'newest',
+    );
+    expect(result).toEqual(['LATER', 'EARLIER']);
+  });
+
+  it('breaks Newest first ties by Ticket key, independent of input order', () => {
+    const same = '2026-10-10T10:00:00.000+0000';
+    const tickets = [
+      created('PROJ-2', null, same),
+      created('PROJ-1', '2026-11-01', same),
+      created('PROJ-3', TODAY, same),
+    ];
+    expect(sortedKeys(tickets, 'newest')).toEqual([
+      'PROJ-1',
+      'PROJ-2',
+      'PROJ-3',
+    ]);
+    expect(sortedKeys([...tickets].reverse(), 'newest')).toEqual([
+      'PROJ-1',
+      'PROJ-2',
+      'PROJ-3',
+    ]);
+  });
+
+  it('still reports each row its Ticket Group and Due Date Badge under Newest first', () => {
+    const { rows } = buildTicketListView({
+      tickets: mixed,
+      today: TODAY,
+      sortOrder: 'newest',
+    });
+    expect(
+      rows.map((row) => [row.ticket.key, row.group, row.badge?.label]),
+    ).toEqual([
+      ['UPCOMING-NEWEST', 'upcoming', 'Nov 5'],
+      ['NO-DATE-NEW', 'noDate', undefined],
+      ['TODAY-MID', 'today', 'Today'],
+      ['OVERDUE-OLD', 'overdue', 'Overdue'],
+    ]);
+  });
+});
+
+describe('SORT_ORDER_OPTIONS', () => {
+  it('offers "Due date" first, then "Newest first"', () => {
+    expect(SORT_ORDER_OPTIONS).toEqual([
+      { value: 'dueDate', label: 'Due date' },
+      { value: 'newest', label: 'Newest first' },
+    ]);
   });
 });
 
