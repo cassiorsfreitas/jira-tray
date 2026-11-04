@@ -54,7 +54,7 @@ describe('JQL query', () => {
 
     const [, init] = fetchSpy.mock.calls[0];
     const body = JSON.parse(init?.body as string);
-    expect(body.jql).toBe('assignee = currentUser() AND statusCategory != Done ORDER BY due ASC');
+    expect(body.jql).toBe('assignee = currentUser() AND statusCategory != Done AND status != "Refinement" ORDER BY due ASC');
   });
 
   it('POSTs to the correct Jira Cloud search endpoint', async () => {
