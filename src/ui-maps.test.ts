@@ -86,24 +86,18 @@ describe('statusColor', () => {
   it.each([
     ['To Do', 'todo', '#9c9c9d'],
     ['In Progress', 'inprogress', '#57c1ff'],
-    ['Development', 'inprogress', '#57c1ff'],
   ] as const)('colours "%s" by its status name', (status, category, color) => {
     expect(statusColor(status, category)).toBe(color);
   });
 
-  it('shows Development like In Progress whatever its Status Category', () => {
-    expect(statusColor('Development', 'todo')).toBe('#57c1ff');
-    expect(statusColor('Development', 'inreview')).toBe('#57c1ff');
-  });
-
   it('matches the status name case-insensitively and ignoring surrounding space', () => {
-    expect(statusColor('  development ', 'inreview')).toBe('#57c1ff');
+    expect(statusColor('  in progress ', 'todo')).toBe('#57c1ff');
     expect(statusColor('TO DO', 'inprogress')).toBe('#9c9c9d');
   });
 
   it('falls back to the Status Category colour for any other status name', () => {
+    expect(statusColor('Development', 'inprogress')).toBe('#57c1ff');
     expect(statusColor('In Review', 'inreview')).toBe('#a78bfa');
-    expect(statusColor('Staging', 'inprogress')).toBe('#57c1ff');
     expect(statusColor('Waiting', 'todo')).toBe('#9c9c9d');
     expect(statusColor('Shipped', 'done')).toBe('#59d499');
   });

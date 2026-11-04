@@ -31,16 +31,10 @@ export function statusPillStyle(statusCategory: StatusCategory): PillStyle {
   return STATUS_PILL_STYLES[statusCategory];
 }
 
-const IN_PROGRESS_BLUE = '#57c1ff';
-
-/**
- * Colours for the Jira Statuses we recognise by name, keyed by lower-cased
- * name. "Development" is shown as In Progress.
- */
+/** Colours for the Jira Statuses we recognise by name, keyed by lower-cased name. */
 const STATUS_NAME_COLORS: Record<string, string> = {
   'to do': MUTED,
-  'in progress': IN_PROGRESS_BLUE,
-  development: IN_PROGRESS_BLUE,
+  'in progress': '#57c1ff',
 };
 
 /**
