@@ -181,7 +181,11 @@ describe('buildTicketListView Sort Order', () => {
       created('PROJ-1', '2026-11-01', same),
       created('PROJ-3', TODAY, same),
     ];
-    expect(sortedKeys(tickets, 'newest')).toEqual(['PROJ-1', 'PROJ-2', 'PROJ-3']);
+    expect(sortedKeys(tickets, 'newest')).toEqual([
+      'PROJ-1',
+      'PROJ-2',
+      'PROJ-3',
+    ]);
     expect(sortedKeys([...tickets].reverse(), 'newest')).toEqual([
       'PROJ-1',
       'PROJ-2',
@@ -195,7 +199,9 @@ describe('buildTicketListView Sort Order', () => {
       today: TODAY,
       sortOrder: 'newest',
     });
-    expect(rows.map((row) => [row.ticket.key, row.group, row.badge?.label])).toEqual([
+    expect(
+      rows.map((row) => [row.ticket.key, row.group, row.badge?.label]),
+    ).toEqual([
       ['UPCOMING-NEWEST', 'upcoming', 'Nov 5'],
       ['NO-DATE-NEW', 'noDate', undefined],
       ['TODAY-MID', 'today', 'Today'],

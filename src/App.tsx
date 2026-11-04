@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import type { Ticket } from './jira-client';
-import { buildTicketListView } from './ticket-list-view';
-import type { SyncState, TicketRow as TicketRowData } from './ticket-list-view';
+import { buildTicketListView, SORT_ORDER_OPTIONS } from './ticket-list-view';
+import type {
+  SortOrder,
+  SyncState,
+  TicketRow as TicketRowData,
+} from './ticket-list-view';
 import { badgeToneColor, groupAccentColor, statusPillStyle } from './ui-maps';
 
 // ── Icons ───────────────────────────────────────────────────────────────────
@@ -353,6 +357,54 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
   );
 }
 
+function SortOrderSelector({
+  value,
+  onChange,
+}: {
+  value: SortOrder;
+  onChange: (sortOrder: SortOrder) => void;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Sort Order"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 2,
+        padding: '0 12px 4px',
+        flexShrink: 0,
+      }}
+    >
+      {SORT_ORDER_OPTIONS.map((option) => {
+        const selected = option.value === value;
+        return (
+          <button
+            key={option.value}
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(option.value)}
+            className="focus:outline-none"
+            style={{
+              fontSize: 11,
+              lineHeight: '1.4',
+              padding: '2px 8px',
+              borderRadius: 4,
+              border: 'none',
+              cursor: 'pointer',
+              color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
+              backgroundColor: selected ? 'var(--surface-1)' : 'transparent',
+            }}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Root component ─────────────────────────────────────────────────────────────
 
 const SYNC_STATE_TICK_MS = 15_000;
@@ -363,6 +415,7 @@ export function App() {
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [lastErrorAt, setLastErrorAt] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [sortOrder, setSortOrder] = useState<SortOrder>('dueDate');
 
   function handleRefresh() {
     setTickets(null);
@@ -419,6 +472,7 @@ export function App() {
   const { rows, syncState } = buildTicketListView({
     tickets: tickets ?? [],
     today,
+    sortOrder,
     lastSyncedAt,
     lastAttemptFailed,
     now,
@@ -476,6 +530,8 @@ export function App() {
           </button>
         </div>
       </header>
+
+      <SortOrderSelector value={sortOrder} onChange={setSortOrder} />
 
       {isLoading ? (
         <main className="flex-1 min-h-0">
