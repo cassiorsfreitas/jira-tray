@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
-import type { Ticket } from './jira-client';
-import type { Preferences } from './preferences-store';
-import { localDateString } from './ticket-grouping';
-import { buildTicketListView, SORT_ORDER_OPTIONS } from './ticket-list-view';
+import { useState, useEffect, useRef } from "react";
+import type { Ticket } from "./jira-client";
+import type { Preferences } from "./preferences-store";
+import { localDateString } from "./ticket-grouping";
+import { buildTicketListView, SORT_ORDER_OPTIONS } from "./ticket-list-view";
 import type {
   FilterTab,
   FilterTabView,
   SortOrder,
   SyncState,
   TicketRow as TicketRowData,
-} from './ticket-list-view';
+} from "./ticket-list-view";
 import {
   CONTROLS_DIVIDER_HEIGHT,
   FOOTER_HEIGHT,
@@ -19,8 +19,8 @@ import {
   SEARCH_HEIGHT,
   SORT_ROW_HEIGHT,
   TABS_HEIGHT,
-} from './popup-layout';
-import { badgeToneColor, groupAccentColor, statusColor } from './ui-maps';
+} from "./popup-layout";
+import { badgeToneColor, groupAccentColor, statusColor } from "./ui-maps";
 
 // ── Icons ───────────────────────────────────────────────────────────────────
 
@@ -129,9 +129,9 @@ function ArrowUpRightIcon() {
 }
 
 const TRUNCATE = {
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
 } as const;
 
 function TicketRow({ row }: { row: TicketRowData }) {
@@ -143,16 +143,16 @@ function TicketRow({ row }: { row: TicketRowData }) {
       onClick={() => window.electronAPI.openUrl(ticket.url)}
       className="ticket-row focus:outline-none"
       style={{
-        display: 'flex',
-        alignItems: 'stretch',
-        width: '100%',
-        boxSizing: 'border-box',
+        display: "flex",
+        alignItems: "stretch",
+        width: "100%",
+        boxSizing: "border-box",
         gap: 10,
         height: ROW_HEIGHT,
-        padding: '8px 10px',
-        overflow: 'hidden',
-        position: 'relative',
-        textAlign: 'left',
+        padding: "8px 10px",
+        overflow: "hidden",
+        position: "relative",
+        textAlign: "left",
       }}
     >
       <span
@@ -166,10 +166,10 @@ function TicketRow({ row }: { row: TicketRowData }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            display: 'flex',
-            alignItems: 'baseline',
+            display: "flex",
+            alignItems: "baseline",
             gap: 6,
-            overflow: 'hidden',
+            overflow: "hidden",
             // Room for the hover arrow in the top-right corner of the row.
             paddingRight: 18,
           }}
@@ -177,10 +177,10 @@ function TicketRow({ row }: { row: TicketRowData }) {
           <span
             style={{
               fontSize: 10,
-              fontFamily: 'ui-monospace, monospace',
-              color: 'var(--text-secondary)',
+              fontFamily: "ui-monospace, monospace",
+              color: "var(--text-secondary)",
               flexShrink: 0,
-              lineHeight: '1.4',
+              lineHeight: "1.4",
             }}
           >
             {ticket.key}
@@ -189,10 +189,10 @@ function TicketRow({ row }: { row: TicketRowData }) {
             style={{
               fontSize: 13,
               fontWeight: 500,
-              color: 'var(--text-primary)',
+              color: "var(--text-primary)",
               flex: 1,
               minWidth: 0,
-              lineHeight: '1.4',
+              lineHeight: "1.4",
               ...TRUNCATE,
             }}
           >
@@ -205,7 +205,7 @@ function TicketRow({ row }: { row: TicketRowData }) {
                 fontWeight: 600,
                 color: badgeToneColor(badge.tone),
                 flexShrink: 0,
-                lineHeight: '1.4',
+                lineHeight: "1.4",
               }}
             >
               {badge.label}
@@ -214,31 +214,31 @@ function TicketRow({ row }: { row: TicketRowData }) {
         </div>
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 6,
             marginTop: 2,
             fontSize: 11,
-            lineHeight: '1.3',
-            color: 'var(--text-secondary)',
+            lineHeight: "1.3",
+            color: "var(--text-secondary)",
           }}
         >
           <span style={{ ...TRUNCATE, minWidth: 0 }}>{ticket.board}</span>
           <span
             style={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 4,
               color: statusTint,
               flexShrink: 0,
-              maxWidth: '50%',
+              maxWidth: "50%",
             }}
           >
             <span
               style={{
                 width: 6,
                 height: 6,
-                borderRadius: '50%',
+                borderRadius: "50%",
                 backgroundColor: statusTint,
                 flexShrink: 0,
               }}
@@ -250,11 +250,11 @@ function TicketRow({ row }: { row: TicketRowData }) {
       <span
         className="ticket-row-arrow"
         style={{
-          position: 'absolute',
+          position: "absolute",
           top: 9,
           right: 10,
-          display: 'flex',
-          color: 'var(--text-secondary)',
+          display: "flex",
+          color: "var(--text-secondary)",
         }}
       >
         <ArrowUpRightIcon />
@@ -276,33 +276,37 @@ function SearchField({
     <div
       style={{
         height: SEARCH_HEIGHT,
-        boxSizing: 'border-box',
-        padding: '8px 12px',
+        boxSizing: "border-box",
+        padding: "8px 12px",
         flexShrink: 0,
       }}
     >
-      <input
-        ref={inputRef}
-        type="search"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Search tickets…  ⌘F"
-        aria-label="Search tickets"
-        spellCheck={false}
-        autoComplete="off"
-        className="search-input"
-        style={{
-          width: '100%',
-          height: 32,
-          boxSizing: 'border-box',
-          padding: '0 10px',
-          fontSize: 12,
-          color: 'var(--text-primary)',
-          backgroundColor: 'var(--surface-1)',
-          border: '1px solid var(--border)',
-          borderRadius: 6,
-        }}
-      />
+      <div style={{ position: "relative" }}>
+        <input
+          ref={inputRef}
+          type="search"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Search tickets…"
+          aria-label="Search tickets"
+          aria-keyshortcuts="Meta+F"
+          spellCheck={false}
+          autoComplete="off"
+          className="search-input"
+          style={{
+            width: "100%",
+            height: 32,
+            boxSizing: "border-box",
+            padding: "0 44px 0 10px",
+            fontSize: 12,
+            color: "var(--text-primary)",
+            backgroundColor: "var(--surface-1)",
+            border: "1px solid var(--border)",
+            borderRadius: 6,
+          }}
+        />
+        {!value && <kbd className="search-shortcut">⌘F</kbd>}
+      </div>
     </div>
   );
 }
@@ -311,16 +315,16 @@ function LoadingState() {
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%",
         gap: 8,
       }}
     >
       <div className="spinner" />
-      <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>
+      <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>
         Loading…
       </p>
     </div>
@@ -331,13 +335,13 @@ function ErrorState({ message }: { message: string }) {
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-        textAlign: 'center',
-        padding: '0 24px',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%",
+        textAlign: "center",
+        padding: "0 24px",
         gap: 4,
       }}
     >
@@ -345,7 +349,7 @@ function ErrorState({ message }: { message: string }) {
         style={{
           fontSize: 12,
           fontWeight: 600,
-          color: 'var(--accent-red)',
+          color: "var(--accent-red)",
           margin: 0,
         }}
       >
@@ -354,9 +358,9 @@ function ErrorState({ message }: { message: string }) {
       <p
         style={{
           fontSize: 12,
-          color: 'var(--text-secondary)',
+          color: "var(--text-secondary)",
           margin: 0,
-          wordBreak: 'break-all',
+          wordBreak: "break-all",
         }}
       >
         {message}
@@ -378,11 +382,11 @@ function FilterTabRow({
       aria-label="Filter tickets"
       style={{
         height: TABS_HEIGHT,
-        boxSizing: 'border-box',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '0 12px 6px',
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "0 12px 6px",
         flexShrink: 0,
       }}
     >
@@ -393,17 +397,17 @@ function FilterTabRow({
           aria-selected={selected}
           onClick={() => onSelect(tab)}
           style={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 5,
             height: 24,
-            padding: '0 10px',
+            padding: "0 10px",
             fontSize: 11,
             fontWeight: selected ? 600 : 400,
-            cursor: 'pointer',
-            color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
-            backgroundColor: selected ? 'var(--surface-1)' : 'transparent',
-            border: `1px solid ${selected ? 'var(--border)' : 'transparent'}`,
+            cursor: "pointer",
+            color: selected ? "var(--text-primary)" : "var(--text-secondary)",
+            backgroundColor: selected ? "var(--surface-1)" : "transparent",
+            border: `1px solid ${selected ? "var(--border)" : "transparent"}`,
             borderRadius: 6,
           }}
         >
@@ -419,13 +423,13 @@ function CenteredMessage({ children }: { children: string }) {
   return (
     <div
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%",
       }}
     >
-      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+      <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
         {children}
       </p>
     </div>
@@ -437,16 +441,16 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
   return (
     <footer
       style={{
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
         gap: 6,
         flexShrink: 0,
         height: FOOTER_HEIGHT,
-        boxSizing: 'border-box',
-        padding: '0 12px',
-        borderTop: '1px solid var(--border)',
+        boxSizing: "border-box",
+        padding: "0 12px",
+        borderTop: "1px solid var(--border)",
         fontSize: 11,
-        color: failed ? 'var(--accent-red)' : 'var(--text-secondary)',
+        color: failed ? "var(--accent-red)" : "var(--text-secondary)",
       }}
     >
       {syncState && (
@@ -455,11 +459,11 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
             style={{
               width: 6,
               height: 6,
-              borderRadius: '50%',
+              borderRadius: "50%",
               flexShrink: 0,
               backgroundColor: failed
-                ? 'var(--accent-red)'
-                : 'var(--text-secondary)',
+                ? "var(--accent-red)"
+                : "var(--text-secondary)",
             }}
           />
           <span style={{ fontWeight: failed ? 600 : 400 }}>
@@ -516,7 +520,7 @@ function ListHeader({
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedLabel =
     SORT_ORDER_OPTIONS.find((option) => option.value === sortOrder)?.label ??
-    '';
+    "";
 
   useEffect(() => {
     if (!open) return;
@@ -524,19 +528,19 @@ function ListHeader({
       if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
     }
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === "Escape") setOpen(false);
     }
     // The Popup hides on blur; make sure a menu left open doesn't reappear.
     function onWindowBlur() {
       setOpen(false);
     }
-    document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('keydown', onKeyDown);
-    window.addEventListener('blur', onWindowBlur);
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("blur", onWindowBlur);
     return () => {
-      document.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('blur', onWindowBlur);
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("blur", onWindowBlur);
     };
   }, [open]);
 
@@ -544,13 +548,13 @@ function ListHeader({
     <div
       ref={containerRef}
       style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
         height: SORT_ROW_HEIGHT,
-        boxSizing: 'border-box',
-        padding: '0 12px',
+        boxSizing: "border-box",
+        padding: "0 12px",
         flexShrink: 0,
       }}
     >
@@ -558,9 +562,9 @@ function ListHeader({
         style={{
           fontSize: 10,
           fontWeight: 600,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: 'var(--text-secondary)',
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--text-secondary)",
         }}
       >
         My work
@@ -608,7 +612,7 @@ const SYNC_STATE_TICK_MS = 15_000;
 export function App() {
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState("");
   // Read synchronously from the main process so the first frame already shows
   // the saved Filter Tab and Sort Order.
   const [preferences, setPreferences] = useState(() =>
@@ -647,23 +651,23 @@ export function App() {
     });
 
     function onKeyDown(e: KeyboardEvent) {
-      if (e.metaKey && e.key === 'r') {
+      if (e.metaKey && e.key === "r") {
         e.preventDefault();
         setTickets(null);
         setError(null);
         window.electronAPI.refresh();
       }
-      if (e.metaKey && e.key === 'f') {
+      if (e.metaKey && e.key === "f") {
         e.preventDefault();
         searchInputRef.current?.focus();
         searchInputRef.current?.select();
       }
     }
-    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
 
     window.electronAPI.onWindowShow(() => {
       (document.activeElement as HTMLElement)?.blur();
-      setSearchText('');
+      setSearchText("");
       setNow(Date.now());
     });
 
@@ -674,7 +678,7 @@ export function App() {
     }, SYNC_STATE_TICK_MS);
 
     return () => {
-      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener("keydown", onKeyDown);
       clearInterval(ageTimer);
     };
   }, []);
@@ -696,32 +700,32 @@ export function App() {
     <div className="app-container">
       <header
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           height: HEADER_HEIGHT,
-          boxSizing: 'border-box',
-          padding: '0 12px',
+          boxSizing: "border-box",
+          padding: "0 12px",
           flexShrink: 0,
-          borderBottom: '1px solid var(--border)',
-          color: 'var(--text-secondary)',
+          borderBottom: "1px solid var(--border)",
+          color: "var(--text-secondary)",
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <JiraIcon />
           <span style={{ fontSize: 12, fontWeight: 600 }}>Jira Tray</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button
             onClick={handleRefresh}
             style={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 4,
-              color: 'inherit',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
+              color: "inherit",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
               padding: 0,
             }}
           >
@@ -731,13 +735,13 @@ export function App() {
           <button
             onClick={() => window.electronAPI.quit()}
             style={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 4,
-              color: 'inherit',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
+              color: "inherit",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
               padding: 0,
             }}
           >
@@ -782,7 +786,7 @@ export function App() {
             <ul
               className="ticket-list"
               style={{
-                listStyle: 'none',
+                listStyle: "none",
                 margin: 0,
                 padding: `${LIST_PADDING_Y}px 8px`,
               }}
@@ -793,11 +797,11 @@ export function App() {
                 </li>
               ))}
             </ul>
-          ) : emptyReason.kind === 'noSearchMatch' ? (
+          ) : emptyReason.kind === "noSearchMatch" ? (
             <CenteredMessage>No tickets match</CenteredMessage>
-          ) : emptyReason.kind === 'noTicketsInTab' ? (
+          ) : emptyReason.kind === "noTicketsInTab" ? (
             <CenteredMessage>
-              {`No tickets ${(tabs.find((t) => t.selected)?.label ?? '').toLowerCase()}`}
+              {`No tickets ${(tabs.find((t) => t.selected)?.label ?? "").toLowerCase()}`}
             </CenteredMessage>
           ) : (
             <CenteredMessage>You're all caught up</CenteredMessage>

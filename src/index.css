@@ -156,3 +156,20 @@ body {
 .sort-menu-item:hover {
   background: rgba(255, 255, 255, 0.08);
 }
+
+/* The ⌘F hint at the right edge of the search field. */
+.search-shortcut {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  padding: 1px 5px;
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  pointer-events: none;
+}
