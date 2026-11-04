@@ -290,7 +290,7 @@ function SearchField({
         aria-label="Search tickets"
         spellCheck={false}
         autoComplete="off"
-        className="select-text focus:outline-none"
+        className="search-input"
         style={{
           width: '100%',
           height: 32,
