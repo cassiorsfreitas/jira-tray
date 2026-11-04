@@ -10,6 +10,16 @@ import type {
   SyncState,
   TicketRow as TicketRowData,
 } from './ticket-list-view';
+import {
+  CONTROLS_DIVIDER_HEIGHT,
+  FOOTER_HEIGHT,
+  HEADER_HEIGHT,
+  LIST_PADDING_Y,
+  ROW_HEIGHT,
+  SEARCH_HEIGHT,
+  SORT_ROW_HEIGHT,
+  TABS_HEIGHT,
+} from './popup-layout';
 import { badgeToneColor, groupAccentColor, statusPillStyle } from './ui-maps';
 
 // ── Icons ───────────────────────────────────────────────────────────────────
@@ -101,7 +111,7 @@ function QuitIcon() {
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function ArrowIcon() {
+function ArrowUpRightIcon() {
   return (
     <svg
       width="12"
@@ -113,7 +123,7 @@ function ArrowIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M3 8h10M9 4l4 4-4 4" />
+      <path d="M5 11l6-6M6 5h5v5" />
     </svg>
   );
 }
@@ -138,7 +148,10 @@ function TicketRow({ row }: { row: TicketRowData }) {
         width: '100%',
         boxSizing: 'border-box',
         gap: 10,
-        padding: '9px 10px',
+        height: ROW_HEIGHT,
+        padding: '8px 10px',
+        overflow: 'hidden',
+        position: 'relative',
         textAlign: 'left',
       }}
     >
@@ -157,6 +170,8 @@ function TicketRow({ row }: { row: TicketRowData }) {
             alignItems: 'baseline',
             gap: 6,
             overflow: 'hidden',
+            // Room for the hover arrow in the top-right corner of the row.
+            paddingRight: 18,
           }}
         >
           <span
@@ -235,13 +250,14 @@ function TicketRow({ row }: { row: TicketRowData }) {
       <span
         className="ticket-row-arrow"
         style={{
+          position: 'absolute',
+          top: 9,
+          right: 10,
           display: 'flex',
-          alignItems: 'center',
-          flexShrink: 0,
           color: 'var(--text-secondary)',
         }}
       >
-        <ArrowIcon />
+        <ArrowUpRightIcon />
       </span>
     </button>
   );
@@ -259,7 +275,7 @@ function SearchField({
   return (
     <div
       style={{
-        height: 40,
+        height: SEARCH_HEIGHT,
         boxSizing: 'border-box',
         padding: '0 12px 8px',
         flexShrink: 0,
@@ -361,7 +377,7 @@ function FilterTabRow({
       role="tablist"
       aria-label="Filter tickets"
       style={{
-        height: 34,
+        height: TABS_HEIGHT,
         boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'center',
@@ -425,7 +441,7 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
         alignItems: 'center',
         gap: 6,
         flexShrink: 0,
-        height: 28,
+        height: FOOTER_HEIGHT,
         boxSizing: 'border-box',
         padding: '0 12px',
         borderTop: '1px solid var(--border)',
@@ -471,7 +487,9 @@ function SortOrderSelector({
         alignItems: 'center',
         justifyContent: 'flex-end',
         gap: 2,
-        padding: '0 12px 4px',
+        height: SORT_ROW_HEIGHT,
+        boxSizing: 'border-box',
+        padding: '0 12px',
         flexShrink: 0,
       }}
     >
@@ -601,8 +619,11 @@ export function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 12px',
+          height: HEADER_HEIGHT,
+          boxSizing: 'border-box',
+          padding: '0 12px',
           flexShrink: 0,
+          borderBottom: '1px solid var(--border)',
           color: 'var(--text-secondary)',
         }}
       >
@@ -646,16 +667,23 @@ export function App() {
         </div>
       </header>
 
-      <SearchField
-        value={searchText}
-        onChange={setSearchText}
-        inputRef={searchInputRef}
-      />
+      <div
+        style={{
+          flexShrink: 0,
+          borderBottom: `${CONTROLS_DIVIDER_HEIGHT}px solid var(--border)`,
+        }}
+      >
+        <SearchField
+          value={searchText}
+          onChange={setSearchText}
+          inputRef={searchInputRef}
+        />
 
-      <FilterTabRow
-        tabs={tabs}
-        onSelect={(tab) => updatePreferences({ filterTab: tab })}
-      />
+        <FilterTabRow
+          tabs={tabs}
+          onSelect={(tab) => updatePreferences({ filterTab: tab })}
+        />
+      </div>
 
       <SortOrderSelector
         value={sortOrder}
@@ -673,7 +701,11 @@ export function App() {
           ) : rows.length > 0 ? (
             <ul
               className="ticket-list"
-              style={{ listStyle: 'none', margin: 0, padding: '0 8px 8px' }}
+              style={{
+                listStyle: 'none',
+                margin: 0,
+                padding: `${LIST_PADDING_Y}px 8px`,
+              }}
             >
               {rows.map((row) => (
                 <li key={row.ticket.key}>
