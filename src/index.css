@@ -27,7 +27,9 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes popup-enter {
@@ -69,4 +71,10 @@ body {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.ticket-row-arrow {
+  opacity: 0;
+}
 
+.ticket-row:hover .ticket-row-arrow {
+  opacity: 1;
+}
