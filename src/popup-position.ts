@@ -11,17 +11,15 @@ interface Position {
 }
 
 /**
- * Computes the top-left corner of the popup window so it appears centered
- * directly below the tray icon, clamped to stay within the display work area.
+ * Computes the top-left corner of the popup window so its left edge aligns
+ * with the tray icon's left edge, directly below it, clamped to stay within the display work area.
  */
 export function computePopupPosition(
   trayBounds: Bounds,
   windowSize: { width: number; height: number },
   workArea: Bounds,
 ): Position {
-  const x = Math.round(
-    trayBounds.x + trayBounds.width / 2 - windowSize.width / 2,
-  );
+  const x = Math.round(trayBounds.x);
   const y = Math.round(trayBounds.y + trayBounds.height);
 
   const clampedX = Math.max(
