@@ -613,7 +613,7 @@ export function App() {
   const isLoading = tickets === null && error === null;
 
   return (
-    <div className="app-container flex flex-col h-screen select-none">
+    <div className="app-container">
       <header
         style={{
           display: 'flex',
@@ -691,11 +691,11 @@ export function App() {
       />
 
       {isLoading ? (
-        <main className="flex-1 min-h-0">
+        <main className="app-main">
           <LoadingState />
         </main>
       ) : (
-        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        <main className="app-main app-main-scroll">
           {error ? (
             <ErrorState message={error} />
           ) : rows.length > 0 ? (

@@ -15,7 +15,8 @@
 html,
 body {
   background: transparent;
-  overflow-x: hidden;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -58,6 +59,22 @@ body {
   -electron-corner-smoothing: 60%;
   animation: popup-enter 120ms ease-out both;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100vh;
+  user-select: none;
+}
+
+/* The only scrolling region: header, controls and footer stay fixed. */
+.app-main {
+  flex: 1;
+  min-height: 0;
+}
+
+.app-main-scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .ticket-row {
