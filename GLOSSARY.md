@@ -15,7 +15,7 @@ The name of the Jira project a ticket belongs to. Not a sprint board or scrum bo
 _Avoid_: Project, workspace, team
 
 **Status**:
-The human-readable workflow state of a ticket as configured in Jira (e.g., "In Progress", "Refinement"). Distinct from Status Category. A ticket row shows "To Do" or "In Progress" for tickets in the `todo` or `inprogress` Status Category (whatever the Jira Status is called, e.g. "Development"), and the Jira Status name otherwise. It is coloured by Status Category.
+The human-readable workflow state of a ticket as configured in Jira (e.g., "In Progress", "Refinement"). Distinct from Status Category.
 _Avoid_: State, stage, workflow step
 
 **Status Category**:

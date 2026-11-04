@@ -31,20 +31,6 @@ export function statusPillStyle(statusCategory: StatusCategory): PillStyle {
   return STATUS_PILL_STYLES[statusCategory];
 }
 
-/**
- * The Status text on a row. Tickets in the todo and inprogress Status
- * Categories read "To Do" and "In Progress" whatever their Jira Status is
- * called (e.g. "Development"); other categories keep the Jira Status name.
- */
-export function statusLabel(
-  status: string,
-  statusCategory: StatusCategory,
-): string {
-  if (statusCategory === 'todo') return 'To Do';
-  if (statusCategory === 'inprogress') return 'In Progress';
-  return status;
-}
-
 const GROUP_ACCENT_COLORS: Record<TicketGroup, string> = {
   overdue: 'var(--accent-red)',
   today: 'var(--accent-yellow)',

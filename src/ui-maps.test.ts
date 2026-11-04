@@ -3,7 +3,6 @@ import {
   badgeToneColor,
   groupAccentColor,
   priorityColor,
-  statusLabel,
   statusPillStyle,
 } from './ui-maps';
 
@@ -79,23 +78,5 @@ describe('badgeToneColor', () => {
     expect(badgeToneColor('red')).toBe('var(--accent-red)');
     expect(badgeToneColor('yellow')).toBe('var(--accent-yellow)');
     expect(badgeToneColor('neutral')).toBe('var(--text-secondary)');
-  });
-});
-
-describe('statusLabel', () => {
-  it('shows "To Do" for any Status in the todo Status Category', () => {
-    expect(statusLabel('To Do', 'todo')).toBe('To Do');
-    expect(statusLabel('Refinement', 'todo')).toBe('To Do');
-  });
-
-  it('shows "In Progress" for any Status in the inprogress Status Category', () => {
-    expect(statusLabel('In Progress', 'inprogress')).toBe('In Progress');
-    expect(statusLabel('Development', 'inprogress')).toBe('In Progress');
-    expect(statusLabel('Staging', 'inprogress')).toBe('In Progress');
-  });
-
-  it('keeps the Jira Status name for the other Status Categories', () => {
-    expect(statusLabel('In Review', 'inreview')).toBe('In Review');
-    expect(statusLabel('Production', 'done')).toBe('Production');
   });
 });
