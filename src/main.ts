@@ -4,6 +4,8 @@ import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { createPopupWindow, createTray } from './tray';
 import { loadCredentials, seedCredentialsFromEnv } from './credentials-store';
+import { loadPreferences, savePreferences } from './preferences-store';
+import type { Preferences } from './preferences-store';
 import { fetchJiraTickets } from './jira-client';
 import { groupTickets } from './ticket-grouping';
 
@@ -36,7 +38,10 @@ app.whenReady().then(() => {
 
   async function doFetch(): Promise<void> {
     if (!credentials) {
-      popupWindow.webContents.send('tickets-error', 'No Jira credentials configured');
+      popupWindow.webContents.send(
+        'tickets-error',
+        'No Jira credentials configured',
+      );
       return;
     }
     try {
@@ -61,7 +66,9 @@ app.whenReady().then(() => {
   });
 
   const { updateBadge } = createTray(popupWindow, {
-    onShow: () => { void doFetch(); },
+    onShow: () => {
+      void doFetch();
+    },
   });
 
   ipcMain.on('quit', () => {
@@ -70,6 +77,16 @@ app.whenReady().then(() => {
 
   ipcMain.on('refresh', () => {
     void doFetch();
+  });
+
+  // Synchronous so the renderer can render its first frame with the saved
+  // Filter Tab and Sort Order instead of flashing the defaults.
+  ipcMain.on('get-preferences', (event) => {
+    event.returnValue = loadPreferences();
+  });
+
+  ipcMain.on('set-preferences', (_, changes: Partial<Preferences>) => {
+    savePreferences(changes);
   });
 
   ipcMain.on('open-url', (_, url: string) => {
