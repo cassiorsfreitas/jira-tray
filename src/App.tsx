@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Ticket } from './jira-client';
 import { buildTicketListView } from './ticket-list-view';
-import type { SyncState, TicketRow as TicketRowData } from './ticket-list-view';
+import type {
+  FilterTab,
+  FilterTabView,
+  SyncState,
+  TicketRow as TicketRowData,
+} from './ticket-list-view';
 import { badgeToneColor, groupAccentColor, statusPillStyle } from './ui-maps';
 
 // ── Icons ───────────────────────────────────────────────────────────────────
@@ -341,6 +346,73 @@ function ErrorState({ message }: { message: string }) {
   );
 }
 
+function FilterTabRow({
+  tabs,
+  onSelect,
+}: {
+  tabs: FilterTabView[];
+  onSelect: (tab: FilterTab) => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Filter tickets"
+      style={{
+        height: 34,
+        boxSizing: 'border-box',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '0 12px 6px',
+        flexShrink: 0,
+      }}
+    >
+      {tabs.map(({ tab, label, count, selected }) => (
+        <button
+          key={tab}
+          role="tab"
+          aria-selected={selected}
+          onClick={() => onSelect(tab)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5,
+            height: 24,
+            padding: '0 10px',
+            fontSize: 11,
+            fontWeight: selected ? 600 : 400,
+            cursor: 'pointer',
+            color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
+            backgroundColor: selected ? 'var(--surface-1)' : 'transparent',
+            border: `1px solid ${selected ? 'var(--border)' : 'transparent'}`,
+            borderRadius: 12,
+          }}
+        >
+          {label}
+          <span style={{ opacity: 0.7 }}>{count}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function NoTicketsInTabState({ label }: { label: string }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+      }}
+    >
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+        No tickets {label.toLowerCase()}
+      </p>
+    </div>
+  );
+}
+
 function NoSearchMatchState() {
   return (
     <div
@@ -422,6 +494,8 @@ export function App() {
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState('');
+  // Not persisted yet; the selection resets on app restart.
+  const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [lastErrorAt, setLastErrorAt] = useState<number | null>(null);
@@ -485,9 +559,10 @@ export function App() {
   const lastAttemptFailed =
     lastErrorAt !== null &&
     (lastSyncedAt === null || lastErrorAt > lastSyncedAt);
-  const { rows, emptyReason, syncState } = buildTicketListView({
+  const { rows, tabs, emptyReason, syncState } = buildTicketListView({
     tickets: tickets ?? [],
     today,
+    filterTab,
     searchText,
     lastSyncedAt,
     lastAttemptFailed,
@@ -553,6 +628,8 @@ export function App() {
         inputRef={searchInputRef}
       />
 
+      <FilterTabRow tabs={tabs} onSelect={setFilterTab} />
+
       {isLoading ? (
         <main className="flex-1 min-h-0">
           <LoadingState />
@@ -574,6 +651,10 @@ export function App() {
             </ul>
           ) : emptyReason.kind === 'noSearchMatch' ? (
             <NoSearchMatchState />
+          ) : emptyReason.kind === 'noTicketsInTab' ? (
+            <NoTicketsInTabState
+              label={tabs.find((t) => t.selected)?.label ?? ''}
+            />
           ) : (
             <EmptyState />
           )}

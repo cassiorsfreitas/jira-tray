@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildTicketListView } from './ticket-list-view';
+import type { FilterTab } from './ticket-list-view';
 import type { Ticket } from './jira-client';
 
 const base: Omit<Ticket, 'key' | 'dueDate'> = {
@@ -287,5 +288,223 @@ describe('buildTicketListView Sync State', () => {
   it('has no Sync State before the first attempt completes', () => {
     expect(syncState({ lastSyncedAt: null, now: NOW })).toBeNull();
     expect(syncState({})).toBeNull();
+  });
+});
+
+describe('buildTicketListView Filter Tabs', () => {
+  const FIXTURE: Ticket[] = [
+    { ...ticket('IP-1', null), statusCategory: 'inprogress' },
+    { ...ticket('IP-2', null), statusCategory: 'inprogress' },
+    { ...ticket('TD-1', null), statusCategory: 'todo' },
+    { ...ticket('IR-1', null), statusCategory: 'inreview' },
+  ];
+
+  function tabKeys(
+    filterTab: FilterTab | undefined,
+    tickets: Ticket[] = FIXTURE,
+    searchText?: string,
+  ): string[] {
+    return buildTicketListView({
+      tickets,
+      today: TODAY,
+      filterTab,
+      searchText,
+    }).rows.map((row) => row.ticket.key);
+  }
+
+  it('lists every Ticket under "All", including inreview', () => {
+    expect(tabKeys('all')).toEqual(['IP-1', 'IP-2', 'TD-1', 'IR-1']);
+  });
+
+  it('defaults to "All" when no Filter Tab is given', () => {
+    expect(tabKeys(undefined)).toEqual(['IP-1', 'IP-2', 'TD-1', 'IR-1']);
+  });
+
+  it('lists only inprogress Tickets under "In progress"', () => {
+    expect(tabKeys('inprogress')).toEqual(['IP-1', 'IP-2']);
+  });
+
+  it('lists only todo Tickets under "To do"', () => {
+    expect(tabKeys('todo')).toEqual(['TD-1']);
+  });
+
+  it('keeps inreview Tickets out of both status tabs', () => {
+    expect(tabKeys('inprogress')).not.toContain('IR-1');
+    expect(tabKeys('todo')).not.toContain('IR-1');
+  });
+});
+
+describe('buildTicketListView Filter Tab counts and visibility', () => {
+  const FIXTURE: Ticket[] = [
+    { ...ticket('IP-1', null), statusCategory: 'inprogress' },
+    {
+      ...ticket('IP-2', null),
+      title: 'Fix login',
+      statusCategory: 'inprogress',
+    },
+    { ...ticket('TD-1', null), title: 'Fix signup', statusCategory: 'todo' },
+    { ...ticket('IR-1', null), statusCategory: 'inreview' },
+  ];
+
+  function tabs(
+    filterTab: FilterTab | undefined,
+    tickets: Ticket[] = FIXTURE,
+    searchText?: string,
+  ) {
+    return buildTicketListView({
+      tickets,
+      today: TODAY,
+      filterTab,
+      searchText,
+    }).tabs;
+  }
+
+  it('counts each Filter Tab, with inreview Tickets only in "All"', () => {
+    expect(tabs('all')).toEqual([
+      { tab: 'all', label: 'All', count: 4, selected: true },
+      { tab: 'inprogress', label: 'In progress', count: 2, selected: false },
+      { tab: 'todo', label: 'To do', count: 1, selected: false },
+    ]);
+  });
+
+  it('keeps the counts of other tabs when a tab is selected', () => {
+    const counts = tabs('todo').map((t) => [t.tab, t.count]);
+    expect(counts).toEqual([
+      ['all', 4],
+      ['inprogress', 2],
+      ['todo', 1],
+    ]);
+  });
+
+  it('marks only the selected tab as selected', () => {
+    expect(tabs('inprogress').map((t) => [t.tab, t.selected])).toEqual([
+      ['all', false],
+      ['inprogress', true],
+      ['todo', false],
+    ]);
+  });
+
+  it('makes counts reflect the search text', () => {
+    const counts = tabs('all', FIXTURE, 'fix').map((t) => [t.tab, t.count]);
+    expect(counts).toEqual([
+      ['all', 2],
+      ['inprogress', 1],
+      ['todo', 1],
+    ]);
+  });
+
+  it('does not let the selected tab narrow the other counts', () => {
+    const counts = tabs('inprogress', FIXTURE, 'fix').map((t) => [
+      t.tab,
+      t.count,
+    ]);
+    expect(counts).toEqual([
+      ['all', 2],
+      ['inprogress', 1],
+      ['todo', 1],
+    ]);
+  });
+
+  it('hides zero-count tabs except "All" and the selected tab', () => {
+    const onlyInProgress = [FIXTURE[0]];
+    expect(tabs('all', onlyInProgress).map((t) => t.tab)).toEqual([
+      'all',
+      'inprogress',
+    ]);
+  });
+
+  it('keeps a selected zero-count tab visible', () => {
+    const onlyInProgress = [FIXTURE[0]];
+    expect(tabs('todo', onlyInProgress).map((t) => [t.tab, t.count])).toEqual([
+      ['all', 1],
+      ['inprogress', 1],
+      ['todo', 0],
+    ]);
+  });
+
+  it('shows only "All" when there are no Tickets', () => {
+    expect(tabs('all', [])).toEqual([
+      { tab: 'all', label: 'All', count: 0, selected: true },
+    ]);
+  });
+
+  it('hides a zero-count tab once a search excludes all its Tickets', () => {
+    expect(tabs('all', FIXTURE, 'login').map((t) => t.tab)).toEqual([
+      'all',
+      'inprogress',
+    ]);
+  });
+});
+
+describe('buildTicketListView empty reason with Filter Tabs', () => {
+  const inProgress: Ticket = {
+    ...ticket('IP-1', null),
+    title: 'Fix login',
+    statusCategory: 'inprogress',
+  };
+  const review: Ticket = {
+    ...ticket('IR-1', null),
+    statusCategory: 'inreview',
+  };
+
+  function emptyReason(
+    filterTab: FilterTab,
+    tickets: Ticket[],
+    searchText?: string,
+  ) {
+    return buildTicketListView({ tickets, today: TODAY, filterTab, searchText })
+      .emptyReason;
+  }
+
+  it('reports the selected tab when it has no Tickets', () => {
+    expect(emptyReason('todo', [inProgress])).toEqual({
+      kind: 'noTicketsInTab',
+      tab: 'todo',
+    });
+  });
+
+  it('reports the selected tab for "In progress" when only inreview Tickets exist', () => {
+    expect(emptyReason('inprogress', [review])).toEqual({
+      kind: 'noTicketsInTab',
+      tab: 'inprogress',
+    });
+  });
+
+  it('keeps the selected empty tab selected and visible', () => {
+    const { tabs, rows } = buildTicketListView({
+      tickets: [inProgress],
+      today: TODAY,
+      filterTab: 'todo',
+    });
+    expect(rows).toEqual([]);
+    expect(tabs.find((t) => t.selected)?.tab).toBe('todo');
+  });
+
+  it('reports no Tickets at all under "All" when there are none', () => {
+    expect(emptyReason('all', [])).toEqual({ kind: 'noTickets' });
+  });
+
+  it('reports no Tickets at all even when a status tab is selected', () => {
+    expect(emptyReason('todo', [])).toEqual({ kind: 'noTickets' });
+  });
+
+  it('reports no search match when the search excludes every Ticket', () => {
+    expect(emptyReason('all', [inProgress], 'zzz')).toEqual({
+      kind: 'noSearchMatch',
+    });
+    expect(emptyReason('inprogress', [inProgress], 'zzz')).toEqual({
+      kind: 'noSearchMatch',
+    });
+  });
+
+  it('reports the selected tab when the search matches only other tabs', () => {
+    expect(emptyReason('todo', [inProgress], 'login')).toEqual({
+      kind: 'noTicketsInTab',
+      tab: 'todo',
+    });
+  });
+
+  it('reports none when the selected tab has rows', () => {
+    expect(emptyReason('inprogress', [inProgress])).toEqual({ kind: 'none' });
   });
 });
