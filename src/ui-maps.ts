@@ -31,6 +31,30 @@ export function statusPillStyle(statusCategory: StatusCategory): PillStyle {
   return STATUS_PILL_STYLES[statusCategory];
 }
 
+/** Colours for the Jira Statuses this team's board uses, keyed by lower-cased name. */
+const STATUS_NAME_COLORS: Record<string, string> = {
+  refinement: '#a78bfa',
+  'to do': MUTED,
+  development: '#57c1ff',
+  'in review': '#f97316',
+  staging: '#2dd4bf',
+  production: '#59d499',
+};
+
+/**
+ * The colour of a Status on a row: by its name when we know it, otherwise by
+ * its Status Category so an unknown Status still gets a sensible colour.
+ */
+export function statusColor(
+  status: string,
+  statusCategory: StatusCategory,
+): string {
+  return (
+    STATUS_NAME_COLORS[status.trim().toLowerCase()] ??
+    statusPillStyle(statusCategory).text
+  );
+}
+
 const GROUP_ACCENT_COLORS: Record<TicketGroup, string> = {
   overdue: 'var(--accent-red)',
   today: 'var(--accent-yellow)',
