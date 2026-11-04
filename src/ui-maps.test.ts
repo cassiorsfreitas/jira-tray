@@ -3,6 +3,7 @@ import {
   badgeToneColor,
   groupAccentColor,
   priorityColor,
+  statusColor,
   statusPillStyle,
 } from './ui-maps';
 
@@ -78,5 +79,27 @@ describe('badgeToneColor', () => {
     expect(badgeToneColor('red')).toBe('var(--accent-red)');
     expect(badgeToneColor('yellow')).toBe('var(--accent-yellow)');
     expect(badgeToneColor('neutral')).toBe('var(--text-secondary)');
+  });
+});
+
+describe('statusColor', () => {
+  it('colours "To Do" grey whatever its Status Category', () => {
+    expect(statusColor('To Do', 'todo')).toBe('#9c9c9d');
+    expect(statusColor('To Do', 'inprogress')).toBe('#9c9c9d');
+  });
+
+  it('colours "In Progress" blue whatever its Status Category', () => {
+    expect(statusColor('In Progress', 'inprogress')).toBe('#57c1ff');
+    expect(statusColor('In Progress', 'todo')).toBe('#57c1ff');
+  });
+
+  it('matches the Status name case-insensitively and ignoring surrounding space', () => {
+    expect(statusColor(' to do ', 'inprogress')).toBe('#9c9c9d');
+    expect(statusColor('IN PROGRESS', 'todo')).toBe('#57c1ff');
+  });
+
+  it('falls back to the Status Category colour for any other Status name', () => {
+    expect(statusColor('In Review', 'inreview')).toBe('#a78bfa');
+    expect(statusColor('Shipped', 'done')).toBe('#59d499');
   });
 });

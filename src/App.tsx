@@ -20,7 +20,7 @@ import {
   SORT_ROW_HEIGHT,
   TABS_HEIGHT,
 } from './popup-layout';
-import { badgeToneColor, groupAccentColor, statusPillStyle } from './ui-maps';
+import { badgeToneColor, groupAccentColor, statusColor } from './ui-maps';
 
 // ── Icons ───────────────────────────────────────────────────────────────────
 
@@ -136,7 +136,7 @@ const TRUNCATE = {
 
 function TicketRow({ row }: { row: TicketRowData }) {
   const { ticket, group, badge } = row;
-  const statusTint = statusPillStyle(ticket.statusCategory).text;
+  const statusTint = statusColor(ticket.status, ticket.statusCategory);
 
   return (
     <button
