@@ -471,52 +471,132 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
   );
 }
 
-function SortOrderSelector({
-  value,
-  onChange,
+function ChevronDownIcon() {
+  return (
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 6l4 4 4-4" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 8.5l3.5 3.5L13 4.5" />
+    </svg>
+  );
+}
+
+function ListHeader({
+  sortOrder,
+  onSortOrderChange,
 }: {
-  value: SortOrder;
-  onChange: (sortOrder: SortOrder) => void;
+  sortOrder: SortOrder;
+  onSortOrderChange: (sortOrder: SortOrder) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selectedLabel =
+    SORT_ORDER_OPTIONS.find((option) => option.value === sortOrder)?.label ??
+    '';
+
+  useEffect(() => {
+    if (!open) return;
+    function onMouseDown(e: MouseEvent) {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    // The Popup hides on blur; make sure a menu left open doesn't reappear.
+    function onWindowBlur() {
+      setOpen(false);
+    }
+    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('keydown', onKeyDown);
+    window.addEventListener('blur', onWindowBlur);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('blur', onWindowBlur);
+    };
+  }, [open]);
+
   return (
     <div
-      role="radiogroup"
-      aria-label="Sort Order"
+      ref={containerRef}
       style={{
+        position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'flex-end',
-        gap: 2,
+        justifyContent: 'space-between',
         height: SORT_ROW_HEIGHT,
         boxSizing: 'border-box',
         padding: '0 12px',
         flexShrink: 0,
       }}
     >
-      {SORT_ORDER_OPTIONS.map((option) => {
-        const selected = option.value === value;
-        return (
-          <button
-            key={option.value}
-            role="radio"
-            aria-checked={selected}
-            onClick={() => onChange(option.value)}
-            className="focus:outline-none"
-            style={{
-              fontSize: 11,
-              lineHeight: '1.4',
-              padding: '2px 8px',
-              borderRadius: 4,
-              border: 'none',
-              cursor: 'pointer',
-              color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
-              backgroundColor: selected ? 'var(--surface-1)' : 'transparent',
-            }}
-          >
-            {option.label}
-          </button>
-        );
-      })}
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: 600,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'var(--text-secondary)',
+        }}
+      >
+        My work
+      </span>
+      <button
+        aria-label="Sort Order"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className="sort-trigger"
+      >
+        {selectedLabel}
+        <ChevronDownIcon />
+      </button>
+      {open && (
+        <div role="listbox" aria-label="Sort Order" className="sort-menu">
+          {SORT_ORDER_OPTIONS.map((option) => {
+            const selected = option.value === sortOrder;
+            return (
+              <button
+                key={option.value}
+                role="option"
+                aria-selected={selected}
+                onClick={() => {
+                  onSortOrderChange(option.value);
+                  setOpen(false);
+                }}
+                className="sort-menu-item"
+              >
+                <span>{option.label}</span>
+                {selected && <CheckIcon />}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -685,9 +765,9 @@ export function App() {
         />
       </div>
 
-      <SortOrderSelector
-        value={sortOrder}
-        onChange={(order) => updatePreferences({ sortOrder: order })}
+      <ListHeader
+        sortOrder={sortOrder}
+        onSortOrderChange={(order) => updatePreferences({ sortOrder: order })}
       />
 
       {isLoading ? (

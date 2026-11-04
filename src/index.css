@@ -105,3 +105,54 @@ body {
   outline: none;
   border-color: rgba(255, 255, 255, 0.85) !important;
 }
+
+.sort-trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sort-trigger:hover,
+.sort-trigger[aria-expanded='true'] {
+  color: var(--text-primary);
+}
+
+.sort-menu {
+  position: absolute;
+  top: calc(100% - 2px);
+  right: 8px;
+  z-index: 10;
+  min-width: 140px;
+  padding: 4px;
+  background: var(--surface-1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.sort-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: var(--text-primary);
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.sort-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
