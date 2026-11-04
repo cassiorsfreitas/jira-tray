@@ -10,7 +10,7 @@ export const ROW_HEIGHT = 52;
 export const LIST_PADDING_Y = 4;
 
 export const HEADER_HEIGHT = 40;
-export const SEARCH_HEIGHT = 40;
+export const SEARCH_HEIGHT = 48;
 export const TABS_HEIGHT = 34;
 /** The divider under the search field and Filter Tabs. */
 export const CONTROLS_DIVIDER_HEIGHT = 1;

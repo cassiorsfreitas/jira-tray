@@ -277,7 +277,7 @@ function SearchField({
       style={{
         height: SEARCH_HEIGHT,
         boxSizing: 'border-box',
-        padding: '0 12px 8px',
+        padding: '8px 12px',
         flexShrink: 0,
       }}
     >
