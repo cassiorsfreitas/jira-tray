@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Ticket } from './jira-client';
 import { buildTicketListView } from './ticket-list-view';
 import type { TicketRow as TicketRowData } from './ticket-list-view';
@@ -239,6 +239,50 @@ function TicketRow({ row }: { row: TicketRowData }) {
   );
 }
 
+function SearchField({
+  value,
+  onChange,
+  inputRef,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}) {
+  return (
+    <div
+      style={{
+        height: 40,
+        boxSizing: 'border-box',
+        padding: '0 12px 8px',
+        flexShrink: 0,
+      }}
+    >
+      <input
+        ref={inputRef}
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Search tickets…  ⌘F"
+        aria-label="Search tickets"
+        spellCheck={false}
+        autoComplete="off"
+        className="select-text focus:outline-none"
+        style={{
+          width: '100%',
+          height: 32,
+          boxSizing: 'border-box',
+          padding: '0 10px',
+          fontSize: 12,
+          color: 'var(--text-primary)',
+          backgroundColor: 'var(--surface-1)',
+          border: '1px solid var(--border)',
+          borderRadius: 6,
+        }}
+      />
+    </div>
+  );
+}
+
 function LoadingState() {
   return (
     <div
@@ -247,7 +291,7 @@ function LoadingState() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        height: 'calc(100vh - 41px)',
+        flex: 1,
         gap: 8,
       }}
     >
@@ -297,6 +341,23 @@ function ErrorState({ message }: { message: string }) {
   );
 }
 
+function NoSearchMatchState() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+      }}
+    >
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+        No tickets match
+      </p>
+    </div>
+  );
+}
+
 function EmptyState() {
   return (
     <div
@@ -319,6 +380,8 @@ function EmptyState() {
 export function App() {
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   function handleRefresh() {
     setTickets(null);
@@ -342,18 +405,28 @@ export function App() {
         setError(null);
         window.electronAPI.refresh();
       }
+      if (e.metaKey && e.key === 'f') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
     }
     window.addEventListener('keydown', onKeyDown);
 
     window.electronAPI.onWindowShow(() => {
       (document.activeElement as HTMLElement)?.blur();
+      setSearchText('');
     });
 
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
   const today = new Date().toISOString().slice(0, 10);
-  const { rows } = buildTicketListView({ tickets: tickets ?? [], today });
+  const { rows, emptyReason } = buildTicketListView({
+    tickets: tickets ?? [],
+    today,
+    searchText,
+  });
   const isLoading = tickets === null && error === null;
 
   return (
@@ -407,6 +480,12 @@ export function App() {
         </div>
       </header>
 
+      <SearchField
+        value={searchText}
+        onChange={setSearchText}
+        inputRef={searchInputRef}
+      />
+
       {isLoading ? (
         <LoadingState />
       ) : (
@@ -424,6 +503,8 @@ export function App() {
                 </li>
               ))}
             </ul>
+          ) : emptyReason.kind === 'noSearchMatch' ? (
+            <NoSearchMatchState />
           ) : (
             <EmptyState />
           )}
