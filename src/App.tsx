@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Ticket } from './jira-client';
+import type { Preferences } from './preferences-store';
 import { buildTicketListView, SORT_ORDER_OPTIONS } from './ticket-list-view';
 import type {
   FilterTab,
@@ -543,13 +544,21 @@ export function App() {
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState('');
-  // Not persisted yet; the selection resets on app restart.
-  const [filterTab, setFilterTab] = useState<FilterTab>('all');
+  // Read synchronously from the main process so the first frame already shows
+  // the saved Filter Tab and Sort Order.
+  const [preferences, setPreferences] = useState(() =>
+    window.electronAPI.getPreferences(),
+  );
+  const { filterTab, sortOrder } = preferences;
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [lastErrorAt, setLastErrorAt] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const [sortOrder, setSortOrder] = useState<SortOrder>('dueDate');
+
+  function updatePreferences(changes: Partial<Preferences>) {
+    setPreferences((current) => ({ ...current, ...changes }));
+    window.electronAPI.setPreferences(changes);
+  }
 
   function handleRefresh() {
     setTickets(null);
@@ -679,9 +688,15 @@ export function App() {
         inputRef={searchInputRef}
       />
 
-      <FilterTabRow tabs={tabs} onSelect={setFilterTab} />
+      <FilterTabRow
+        tabs={tabs}
+        onSelect={(tab) => updatePreferences({ filterTab: tab })}
+      />
 
-      <SortOrderSelector value={sortOrder} onChange={setSortOrder} />
+      <SortOrderSelector
+        value={sortOrder}
+        onChange={(order) => updatePreferences({ sortOrder: order })}
+      />
 
       {isLoading ? (
         <main className="flex-1 min-h-0">

@@ -10,7 +10,13 @@ interface Window {
     quit: () => void;
     refresh: () => void;
     openUrl: (url: string) => void;
-    onTickets: (callback: (tickets: import('./jira-client').Ticket[]) => void) => void;
+    getPreferences: () => import('./preferences-store').Preferences;
+    setPreferences: (
+      changes: Partial<import('./preferences-store').Preferences>,
+    ) => void;
+    onTickets: (
+      callback: (tickets: import('./jira-client').Ticket[]) => void,
+    ) => void;
     onTicketsError: (callback: (message: string) => void) => void;
     onWindowShow: (callback: () => void) => void;
   };
