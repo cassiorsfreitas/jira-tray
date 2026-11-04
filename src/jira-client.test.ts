@@ -13,6 +13,7 @@ const makeIssue = (overrides: Record<string, unknown> = {}) => ({
     },
     priority: { name: 'High' },
     duedate: '2026-10-25',
+    project: { name: 'Platform' },
     ...overrides,
   },
 });
@@ -93,6 +94,7 @@ describe('Ticket normalisation', () => {
         priority: 'high',
         dueDate: '2026-10-25',
         url: 'https://mycompany.atlassian.net/browse/PROJ-1',
+        board: 'Platform',
       },
     ]);
   });
