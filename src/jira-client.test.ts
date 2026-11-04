@@ -13,6 +13,7 @@ const makeIssue = (overrides: Record<string, unknown> = {}) => ({
     },
     priority: { name: 'High' },
     duedate: '2026-10-25',
+    project: { name: 'Platform' },
     ...overrides,
   },
 });
@@ -53,7 +54,7 @@ describe('JQL query', () => {
 
     const [, init] = fetchSpy.mock.calls[0];
     const body = JSON.parse(init?.body as string);
-    expect(body.jql).toBe('assignee = currentUser() AND statusCategory != Done ORDER BY due ASC');
+    expect(body.jql).toBe('assignee = currentUser() AND statusCategory != Done AND status != "Refinement" ORDER BY due ASC');
   });
 
   it('POSTs to the correct Jira Cloud search endpoint', async () => {
@@ -93,6 +94,7 @@ describe('Ticket normalisation', () => {
         priority: 'high',
         dueDate: '2026-10-25',
         url: 'https://mycompany.atlassian.net/browse/PROJ-1',
+        board: 'Platform',
       },
     ]);
   });
