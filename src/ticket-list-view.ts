@@ -23,6 +23,8 @@ export interface TicketListViewInput {
   tickets: Ticket[];
   /** Today's date as an ISO date string (YYYY-MM-DD). */
   today: string;
+  /** Free text typed in the search field. Absent or blank means no search. */
+  searchText?: string;
   /** Time of the last successful fetch, in epoch milliseconds. */
   lastSyncedAt?: number | null;
   /** Whether the most recent fetch attempt failed. */
@@ -38,9 +40,20 @@ export interface SyncState {
 
 export interface TicketListView {
   rows: TicketRow[];
+  emptyReason: EmptyReason;
   /** Null before the first fetch attempt completes. */
   syncState: SyncState | null;
 }
+
+/**
+ * Why the list has no rows. A discriminated union on `kind` so that new
+ * reasons (e.g. no Tickets in the selected Filter Tab) can be added as extra
+ * variants; renderers should switch on `kind`.
+ */
+export type EmptyReason =
+  | { kind: 'none' }
+  | { kind: 'noTickets' }
+  | { kind: 'noSearchMatch' };
 
 // ── Due Date Badge ─────────────────────────────────────────────────────────
 
@@ -88,6 +101,23 @@ function byDueDateAscending(a: Ticket, b: Ticket): number {
   return a.dueDate < b.dueDate ? -1 : 1;
 }
 
+// ── Search ─────────────────────────────────────────────────────────────────
+
+function matchesSearch(ticket: Ticket, searchText: string): boolean {
+  return [ticket.key, ticket.title, ticket.board].some((field) =>
+    field.toLowerCase().includes(searchText),
+  );
+}
+
+function emptyReasonFor(
+  allTickets: Ticket[],
+  visibleRows: TicketRow[],
+): EmptyReason {
+  if (visibleRows.length > 0) return { kind: 'none' };
+  if (allTickets.length === 0) return { kind: 'noTickets' };
+  return { kind: 'noSearchMatch' };
+}
+
 // ── Sync State ─────────────────────────────────────────────────────────────
 
 const MS_PER_MINUTE = 60_000;
@@ -114,11 +144,16 @@ function computeSyncState({
 export function buildTicketListView({
   tickets,
   today,
+  searchText,
   lastSyncedAt,
   lastAttemptFailed,
   now,
 }: TicketListViewInput): TicketListView {
-  const groups = groupTickets(tickets, today);
+  const query = (searchText ?? '').trim().toLowerCase();
+  const searched = query
+    ? tickets.filter((ticket) => matchesSearch(ticket, query))
+    : tickets;
+  const groups = groupTickets(searched, today);
 
   const rows = GROUP_URGENCY.flatMap((group) =>
     [...groups[group]].sort(byDueDateAscending).map((ticket) => ({
@@ -130,6 +165,7 @@ export function buildTicketListView({
 
   return {
     rows,
+    emptyReason: emptyReasonFor(tickets, rows),
     syncState: computeSyncState({ lastSyncedAt, lastAttemptFailed, now }),
   };
 }
