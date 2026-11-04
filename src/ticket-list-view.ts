@@ -19,10 +19,22 @@ export interface TicketRow {
   badge: DueDateBadge | null;
 }
 
+export type SortOrder = 'dueDate' | 'newest';
+
+export const DEFAULT_SORT_ORDER: SortOrder = 'dueDate';
+
+/** Sort Orders in the order the selector offers them. */
+export const SORT_ORDER_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: 'dueDate', label: 'Due date' },
+  { value: 'newest', label: 'Newest first' },
+];
+
 export interface TicketListViewInput {
   tickets: Ticket[];
   /** Today's date as an ISO date string (YYYY-MM-DD). */
   today: string;
+  /** Defaults to "Due date". */
+  sortOrder?: SortOrder;
 }
 
 export interface TicketListView {
@@ -75,21 +87,43 @@ function byDueDateAscending(a: Ticket, b: Ticket): number {
   return a.dueDate < b.dueDate ? -1 : 1;
 }
 
+function createdTime(ticket: Ticket): number {
+  const time = Date.parse(ticket.created);
+  return Number.isNaN(time) ? -Infinity : time;
+}
+
+function byNewestFirst(a: Ticket, b: Ticket): number {
+  const aTime = createdTime(a);
+  const bTime = createdTime(b);
+  if (aTime !== bTime) return aTime < bTime ? 1 : -1;
+  return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
+}
+
 // ── Entry point ────────────────────────────────────────────────────────────
 
 export function buildTicketListView({
   tickets,
   today,
+  sortOrder = DEFAULT_SORT_ORDER,
 }: TicketListViewInput): TicketListView {
   const groups = groupTickets(tickets, today);
 
-  const rows = GROUP_URGENCY.flatMap((group) =>
-    [...groups[group]].sort(byDueDateAscending).map((ticket) => ({
-      ticket,
-      group,
-      badge: dueDateBadge(group, ticket),
-    })),
-  );
+  const rows =
+    sortOrder === 'newest'
+      ? GROUP_URGENCY.flatMap((group) =>
+          groups[group].map((ticket) => ({
+            ticket,
+            group,
+            badge: dueDateBadge(group, ticket),
+          })),
+        ).sort((a, b) => byNewestFirst(a.ticket, b.ticket))
+      : GROUP_URGENCY.flatMap((group) =>
+          [...groups[group]].sort(byDueDateAscending).map((ticket) => ({
+            ticket,
+            group,
+            badge: dueDateBadge(group, ticket),
+          })),
+        );
 
   return { rows };
 }
