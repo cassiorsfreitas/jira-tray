@@ -19,6 +19,11 @@ export interface TicketRow {
   badge: DueDateBadge | null;
 }
 
+/** Filter Tabs in display order. */
+export const FILTER_TABS = ['all', 'inprogress', 'todo'] as const;
+
+export type FilterTab = (typeof FILTER_TABS)[number];
+
 export type SortOrder = 'dueDate' | 'newest';
 
 export const DEFAULT_SORT_ORDER: SortOrder = 'dueDate';
@@ -33,6 +38,8 @@ export interface TicketListViewInput {
   tickets: Ticket[];
   /** Today's date as an ISO date string (YYYY-MM-DD). */
   today: string;
+  /** The selected Filter Tab. Defaults to "all". */
+  filterTab?: FilterTab;
   /** Free text typed in the search field. Absent or blank means no search. */
   searchText?: string;
   /** Defaults to "Due date". */
@@ -50,8 +57,19 @@ export interface SyncState {
   failed: boolean;
 }
 
+export interface FilterTabView {
+  tab: FilterTab;
+  /** UI copy for the tab, e.g. "In progress". */
+  label: string;
+  /** How many Tickets the tab would show if selected, given the search text. */
+  count: number;
+  selected: boolean;
+}
+
 export interface TicketListView {
   rows: TicketRow[];
+  /** The Filter Tabs to render, in display order, hidden ones omitted. */
+  tabs: FilterTabView[];
   emptyReason: EmptyReason;
   /** Null before the first fetch attempt completes. */
   syncState: SyncState | null;
@@ -65,7 +83,8 @@ export interface TicketListView {
 export type EmptyReason =
   | { kind: 'none' }
   | { kind: 'noTickets' }
-  | { kind: 'noSearchMatch' };
+  | { kind: 'noSearchMatch' }
+  | { kind: 'noTicketsInTab'; tab: FilterTab };
 
 // ── Due Date Badge ─────────────────────────────────────────────────────────
 
@@ -113,6 +132,35 @@ function byDueDateAscending(a: Ticket, b: Ticket): number {
   return a.dueDate < b.dueDate ? -1 : 1;
 }
 
+// ── Filter Tabs ────────────────────────────────────────────────────────────
+
+/** Tickets with the `inreview` Status Category belong to "all" only. */
+function inFilterTab(ticket: Ticket, tab: FilterTab): boolean {
+  return tab === 'all' || ticket.statusCategory === tab;
+}
+
+const FILTER_TAB_LABELS: Record<FilterTab, string> = {
+  all: 'All',
+  inprogress: 'In progress',
+  todo: 'To do',
+};
+
+/**
+ * Counts come from the searched Tickets, before the selected tab filters them,
+ * so each answers "how many would I see if I selected this tab". "All" and the
+ * selected tab are always shown; the rest only when they have Tickets.
+ */
+function buildTabs(searched: Ticket[], selected: FilterTab): FilterTabView[] {
+  return FILTER_TABS.map((tab) => ({
+    tab,
+    label: FILTER_TAB_LABELS[tab],
+    count: searched.filter((ticket) => inFilterTab(ticket, tab)).length,
+    selected: tab === selected,
+  })).filter(
+    ({ tab, count }) => tab === 'all' || tab === selected || count > 0,
+  );
+}
+
 // ── Search ─────────────────────────────────────────────────────────────────
 
 function matchesSearch(ticket: Ticket, searchText: string): boolean {
@@ -123,11 +171,14 @@ function matchesSearch(ticket: Ticket, searchText: string): boolean {
 
 function emptyReasonFor(
   allTickets: Ticket[],
+  searched: Ticket[],
   visibleRows: TicketRow[],
+  filterTab: FilterTab,
 ): EmptyReason {
   if (visibleRows.length > 0) return { kind: 'none' };
   if (allTickets.length === 0) return { kind: 'noTickets' };
-  return { kind: 'noSearchMatch' };
+  if (searched.length === 0) return { kind: 'noSearchMatch' };
+  return { kind: 'noTicketsInTab', tab: filterTab };
 }
 
 function createdTime(ticket: Ticket): number {
@@ -168,6 +219,7 @@ function computeSyncState({
 export function buildTicketListView({
   tickets,
   today,
+  filterTab = 'all',
   searchText,
   sortOrder = DEFAULT_SORT_ORDER,
   lastSyncedAt,
@@ -178,7 +230,10 @@ export function buildTicketListView({
   const searched = query
     ? tickets.filter((ticket) => matchesSearch(ticket, query))
     : tickets;
-  const groups = groupTickets(searched, today);
+  const groups = groupTickets(
+    searched.filter((ticket) => inFilterTab(ticket, filterTab)),
+    today,
+  );
 
   const rows =
     sortOrder === 'newest'
@@ -199,7 +254,8 @@ export function buildTicketListView({
 
   return {
     rows,
-    emptyReason: emptyReasonFor(tickets, rows),
+    tabs: buildTabs(searched, filterTab),
+    emptyReason: emptyReasonFor(tickets, searched, rows, filterTab),
     syncState: computeSyncState({ lastSyncedAt, lastAttemptFailed, now }),
   };
 }
