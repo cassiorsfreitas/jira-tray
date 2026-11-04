@@ -20,8 +20,9 @@ export interface JiraCredentials {
   token: string;
 }
 
+// Only the Jira columns we work from: any other Status (Development, In Review, …) stays out.
 const JQL =
-  'assignee = currentUser() AND statusCategory != Done AND status != "Refinement" ORDER BY due ASC';
+  'assignee = currentUser() AND status in ("To Do", "In Progress") ORDER BY due ASC';
 
 function mapStatusCategory(key: string): StatusCategory {
   switch (key) {

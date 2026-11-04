@@ -55,7 +55,7 @@ describe('JQL query', () => {
 
     const [, init] = fetchSpy.mock.calls[0];
     const body = JSON.parse(init?.body as string);
-    expect(body.jql).toBe('assignee = currentUser() AND statusCategory != Done AND status != "Refinement" ORDER BY due ASC');
+    expect(body.jql).toBe('assignee = currentUser() AND status in ("To Do", "In Progress") ORDER BY due ASC');
   });
 
   it('asks Jira for the created field', async () => {
