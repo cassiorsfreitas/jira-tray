@@ -3,7 +3,7 @@ import {
   badgeToneColor,
   groupAccentColor,
   priorityColor,
-  statusColor,
+  statusLabel,
   statusPillStyle,
 } from './ui-maps';
 
@@ -82,23 +82,20 @@ describe('badgeToneColor', () => {
   });
 });
 
-describe('statusColor', () => {
-  it.each([
-    ['To Do', 'todo', '#9c9c9d'],
-    ['In Progress', 'inprogress', '#57c1ff'],
-  ] as const)('colours "%s" by its status name', (status, category, color) => {
-    expect(statusColor(status, category)).toBe(color);
+describe('statusLabel', () => {
+  it('shows "To Do" for any Status in the todo Status Category', () => {
+    expect(statusLabel('To Do', 'todo')).toBe('To Do');
+    expect(statusLabel('Refinement', 'todo')).toBe('To Do');
   });
 
-  it('matches the status name case-insensitively and ignoring surrounding space', () => {
-    expect(statusColor('  in progress ', 'todo')).toBe('#57c1ff');
-    expect(statusColor('TO DO', 'inprogress')).toBe('#9c9c9d');
+  it('shows "In Progress" for any Status in the inprogress Status Category', () => {
+    expect(statusLabel('In Progress', 'inprogress')).toBe('In Progress');
+    expect(statusLabel('Development', 'inprogress')).toBe('In Progress');
+    expect(statusLabel('Staging', 'inprogress')).toBe('In Progress');
   });
 
-  it('falls back to the Status Category colour for any other status name', () => {
-    expect(statusColor('Development', 'inprogress')).toBe('#57c1ff');
-    expect(statusColor('In Review', 'inreview')).toBe('#a78bfa');
-    expect(statusColor('Waiting', 'todo')).toBe('#9c9c9d');
-    expect(statusColor('Shipped', 'done')).toBe('#59d499');
+  it('keeps the Jira Status name for the other Status Categories', () => {
+    expect(statusLabel('In Review', 'inreview')).toBe('In Review');
+    expect(statusLabel('Production', 'done')).toBe('Production');
   });
 });

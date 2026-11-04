@@ -31,24 +31,18 @@ export function statusPillStyle(statusCategory: StatusCategory): PillStyle {
   return STATUS_PILL_STYLES[statusCategory];
 }
 
-/** Colours for the Jira Statuses we recognise by name, keyed by lower-cased name. */
-const STATUS_NAME_COLORS: Record<string, string> = {
-  'to do': MUTED,
-  'in progress': '#57c1ff',
-};
-
 /**
- * The colour of a Status on a row: by its name when we know it, otherwise by
- * its Status Category so an unknown Status still gets a sensible colour.
+ * The Status text on a row. Tickets in the todo and inprogress Status
+ * Categories read "To Do" and "In Progress" whatever their Jira Status is
+ * called (e.g. "Development"); other categories keep the Jira Status name.
  */
-export function statusColor(
+export function statusLabel(
   status: string,
   statusCategory: StatusCategory,
 ): string {
-  return (
-    STATUS_NAME_COLORS[status.trim().toLowerCase()] ??
-    statusPillStyle(statusCategory).text
-  );
+  if (statusCategory === 'todo') return 'To Do';
+  if (statusCategory === 'inprogress') return 'In Progress';
+  return status;
 }
 
 const GROUP_ACCENT_COLORS: Record<TicketGroup, string> = {
