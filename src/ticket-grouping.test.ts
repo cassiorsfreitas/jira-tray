@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupTickets } from './ticket-grouping';
+import { groupTickets, localDateString } from './ticket-grouping';
 import type { Ticket } from './jira-client';
 
 const base: Omit<Ticket, 'dueDate'> = {
@@ -10,6 +10,7 @@ const base: Omit<Ticket, 'dueDate'> = {
   priority: 'medium',
   url: 'https://example.atlassian.net/browse/PROJ-1',
   board: 'Example Project',
+  created: '2026-10-01T09:30:00.000+0000',
 };
 
 const TODAY = '2026-10-26';
@@ -51,9 +52,17 @@ describe('groupTickets', () => {
   });
 
   it('correctly partitions a mixed list of overdue, today, upcoming, and null-date tickets', () => {
-    const overdueTicket: Ticket = { ...base, key: 'PROJ-10', dueDate: '2026-10-01' };
+    const overdueTicket: Ticket = {
+      ...base,
+      key: 'PROJ-10',
+      dueDate: '2026-10-01',
+    };
     const todayTicket: Ticket = { ...base, key: 'PROJ-11', dueDate: TODAY };
-    const upcomingTicket: Ticket = { ...base, key: 'PROJ-12', dueDate: '2026-11-15' };
+    const upcomingTicket: Ticket = {
+      ...base,
+      key: 'PROJ-12',
+      dueDate: '2026-11-15',
+    };
     const noDateTicket: Ticket = { ...base, key: 'PROJ-13', dueDate: null };
 
     const groups = groupTickets(
@@ -65,5 +74,21 @@ describe('groupTickets', () => {
     expect(groups.today).toEqual([todayTicket]);
     expect(groups.upcoming).toEqual([upcomingTicket]);
     expect(groups.noDate).toEqual([noDateTicket]);
+  });
+});
+
+describe('localDateString', () => {
+  it('uses the local calendar date late in the evening, not the UTC date', () => {
+    expect(localDateString(new Date(2026, 9, 26, 23, 59, 59))).toBe(
+      '2026-10-26',
+    );
+  });
+
+  it('uses the local calendar date just after midnight', () => {
+    expect(localDateString(new Date(2026, 9, 26, 0, 0, 1))).toBe('2026-10-26');
+  });
+
+  it('zero-pads single-digit months and days', () => {
+    expect(localDateString(new Date(2026, 0, 5, 12))).toBe('2026-01-05');
   });
 });

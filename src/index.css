@@ -15,7 +15,8 @@
 html,
 body {
   background: transparent;
-  overflow-x: hidden;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -27,17 +28,18 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
+/* Fade only: moving the container makes the popup edges look like they resize. */
 @keyframes popup-enter {
   from {
     opacity: 0;
-    transform: translateY(-4px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -56,6 +58,22 @@ body {
   -electron-corner-smoothing: 60%;
   animation: popup-enter 120ms ease-out both;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100vh;
+  user-select: none;
+}
+
+/* The only scrolling region: header, controls and footer stay fixed. */
+.app-main {
+  flex: 1;
+  min-height: 0;
+}
+
+.app-main-scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .ticket-row {
@@ -69,4 +87,88 @@ body {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.ticket-row-arrow {
+  opacity: 0;
+}
 
+.ticket-row:hover .ticket-row-arrow {
+  opacity: 1;
+}
+
+.search-input {
+  user-select: text;
+}
+
+/* Replace the browser's default (accent-coloured) focus ring with a white border. */
+.search-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.sort-trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sort-trigger:hover,
+.sort-trigger[aria-expanded='true'] {
+  color: var(--text-primary);
+}
+
+.sort-menu {
+  position: absolute;
+  top: calc(100% - 2px);
+  right: 8px;
+  z-index: 10;
+  min-width: 140px;
+  padding: 4px;
+  background: var(--surface-1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.sort-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: var(--text-primary);
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.sort-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* The ⌘F hint at the right edge of the search field. */
+.search-shortcut {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  padding: 1px 5px;
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  pointer-events: none;
+}

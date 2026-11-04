@@ -8,6 +8,8 @@ export interface Ticket {
   statusCategory: StatusCategory;
   priority: Priority;
   dueDate: string | null;
+  /** Creation timestamp as returned by Jira's `created` field (e.g. 2026-10-01T09:30:00.000+0000). */
+  created: string;
   url: string;
   board: string;
 }
@@ -18,8 +20,12 @@ export interface JiraCredentials {
   token: string;
 }
 
-const JQL =
-  'assignee = currentUser() AND statusCategory != Done AND status != "Refinement" ORDER BY due ASC';
+const JQL = 'assignee = currentUser() AND statusCategory != Done ORDER BY due ASC';
+
+// The only Statuses we show. Matched by name here rather than in the JQL: Jira
+// can have several Statuses with the same name (e.g. a "To Do" in the
+// "indeterminate" category on one project), and a JQL name match only picks one.
+const SHOWN_STATUSES = new Set(['to do', 'in progress']);
 
 function mapStatusCategory(key: string): StatusCategory {
   switch (key) {
@@ -59,6 +65,7 @@ interface JiraIssue {
     };
     priority: { name: string };
     duedate?: string | null;
+    created: string;
     project: { name: string };
   };
 }
@@ -71,7 +78,7 @@ export async function fetchJiraTickets({ domain, email, token }: JiraCredentials
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ jql: JQL, fields: ['summary', 'status', 'priority', 'duedate', 'project'] }),
+    body: JSON.stringify({ jql: JQL, fields: ['summary', 'status', 'priority', 'duedate', 'created', 'project'] }),
   });
 
   if (!response.ok) {
@@ -80,14 +87,17 @@ export async function fetchJiraTickets({ domain, email, token }: JiraCredentials
 
   const data = (await response.json()) as { issues: JiraIssue[]; isLast: boolean; nextPageToken?: string };
 
-  return data.issues.map((issue) => ({
-    key: issue.key,
-    title: issue.fields.summary,
-    status: issue.fields.status.name,
-    statusCategory: mapStatusCategory(issue.fields.status.statusCategory.key),
-    priority: mapPriority(issue.fields.priority.name),
-    dueDate: issue.fields.duedate ?? null,
-    url: `https://${domain}/browse/${issue.key}`,
-    board: issue.fields.project.name,
-  }));
+  return data.issues
+    .filter((issue) => SHOWN_STATUSES.has(issue.fields.status.name.trim().toLowerCase()))
+    .map((issue) => ({
+      key: issue.key,
+      title: issue.fields.summary,
+      status: issue.fields.status.name,
+      statusCategory: mapStatusCategory(issue.fields.status.statusCategory.key),
+      priority: mapPriority(issue.fields.priority.name),
+      dueDate: issue.fields.duedate ?? null,
+      created: issue.fields.created,
+      url: `https://${domain}/browse/${issue.key}`,
+      board: issue.fields.project.name,
+    }));
 }

@@ -1,4 +1,5 @@
 import type { Priority, StatusCategory } from './jira-client';
+import type { BadgeTone, TicketGroup } from './ticket-list-view';
 
 const MUTED = '#9c9c9d';
 
@@ -28,4 +29,46 @@ const STATUS_PILL_STYLES: Record<StatusCategory, PillStyle> = {
 
 export function statusPillStyle(statusCategory: StatusCategory): PillStyle {
   return STATUS_PILL_STYLES[statusCategory];
+}
+
+/**
+ * Colours for the Statuses we show, keyed by lower-cased name. By name, not
+ * Status Category: Jira can have two Statuses called "To Do" in different
+ * categories, and they must look the same.
+ */
+const STATUS_NAME_COLORS: Record<string, string> = {
+  'to do': MUTED,
+  'in progress': '#57c1ff',
+};
+
+/** The colour of a Status on a row: by name when known, else by Status Category. */
+export function statusColor(
+  status: string,
+  statusCategory: StatusCategory,
+): string {
+  return (
+    STATUS_NAME_COLORS[status.trim().toLowerCase()] ??
+    statusPillStyle(statusCategory).text
+  );
+}
+
+const GROUP_ACCENT_COLORS: Record<TicketGroup, string> = {
+  overdue: 'var(--accent-red)',
+  today: 'var(--accent-yellow)',
+  upcoming: 'var(--accent-yellow)',
+  noDate: 'var(--text-secondary)',
+};
+
+export function groupAccentColor(group: TicketGroup): string {
+  return GROUP_ACCENT_COLORS[group];
+}
+
+const BADGE_TONE_COLORS: Record<BadgeTone, string> = {
+  red: 'var(--accent-red)',
+  yellow: 'var(--accent-yellow)',
+  neutral: 'var(--text-secondary)',
+};
+
+export function badgeToneColor(tone: BadgeTone): string {
+  return BADGE_TONE_COLORS[tone];
 }

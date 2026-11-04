@@ -4,8 +4,10 @@ import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { createPopupWindow, createTray } from './tray';
 import { loadCredentials, seedCredentialsFromEnv } from './credentials-store';
+import { loadPreferences, savePreferences } from './preferences-store';
+import type { Preferences } from './preferences-store';
 import { fetchJiraTickets } from './jira-client';
-import { groupTickets } from './ticket-grouping';
+import { groupTickets, localDateString } from './ticket-grouping';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -36,14 +38,17 @@ app.whenReady().then(() => {
 
   async function doFetch(): Promise<void> {
     if (!credentials) {
-      popupWindow.webContents.send('tickets-error', 'No Jira credentials configured');
+      popupWindow.webContents.send(
+        'tickets-error',
+        'No Jira credentials configured',
+      );
       return;
     }
     try {
       const tickets = await fetchJiraTickets(credentials);
       popupWindow.webContents.send('tickets', tickets);
 
-      const today = new Date().toISOString().slice(0, 10);
+      const today = localDateString(new Date());
       const { overdue, today: todayTickets } = groupTickets(tickets, today);
       updateBadge(overdue.length + todayTickets.length);
     } catch (err) {
@@ -61,7 +66,9 @@ app.whenReady().then(() => {
   });
 
   const { updateBadge } = createTray(popupWindow, {
-    onShow: () => { void doFetch(); },
+    onShow: () => {
+      void doFetch();
+    },
   });
 
   ipcMain.on('quit', () => {
@@ -70,6 +77,16 @@ app.whenReady().then(() => {
 
   ipcMain.on('refresh', () => {
     void doFetch();
+  });
+
+  // Synchronous so the renderer can render its first frame with the saved
+  // Filter Tab and Sort Order instead of flashing the defaults.
+  ipcMain.on('get-preferences', (event) => {
+    event.returnValue = loadPreferences();
+  });
+
+  ipcMain.on('set-preferences', (_, changes: Partial<Preferences>) => {
+    savePreferences(changes);
   });
 
   ipcMain.on('open-url', (_, url: string) => {
