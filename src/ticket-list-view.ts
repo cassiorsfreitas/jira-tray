@@ -19,12 +19,24 @@ export interface TicketRow {
   badge: DueDateBadge | null;
 }
 
+export type SortOrder = 'dueDate' | 'newest';
+
+export const DEFAULT_SORT_ORDER: SortOrder = 'dueDate';
+
+/** Sort Orders in the order the selector offers them. */
+export const SORT_ORDER_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: 'dueDate', label: 'Due date' },
+  { value: 'newest', label: 'Newest first' },
+];
+
 export interface TicketListViewInput {
   tickets: Ticket[];
   /** Today's date as an ISO date string (YYYY-MM-DD). */
   today: string;
   /** Free text typed in the search field. Absent or blank means no search. */
   searchText?: string;
+  /** Defaults to "Due date". */
+  sortOrder?: SortOrder;
   /** Time of the last successful fetch, in epoch milliseconds. */
   lastSyncedAt?: number | null;
   /** Whether the most recent fetch attempt failed. */
@@ -118,6 +130,18 @@ function emptyReasonFor(
   return { kind: 'noSearchMatch' };
 }
 
+function createdTime(ticket: Ticket): number {
+  const time = Date.parse(ticket.created);
+  return Number.isNaN(time) ? -Infinity : time;
+}
+
+function byNewestFirst(a: Ticket, b: Ticket): number {
+  const aTime = createdTime(a);
+  const bTime = createdTime(b);
+  if (aTime !== bTime) return aTime < bTime ? 1 : -1;
+  return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
+}
+
 // ── Sync State ─────────────────────────────────────────────────────────────
 
 const MS_PER_MINUTE = 60_000;
@@ -145,6 +169,7 @@ export function buildTicketListView({
   tickets,
   today,
   searchText,
+  sortOrder = DEFAULT_SORT_ORDER,
   lastSyncedAt,
   lastAttemptFailed,
   now,
@@ -155,13 +180,22 @@ export function buildTicketListView({
     : tickets;
   const groups = groupTickets(searched, today);
 
-  const rows = GROUP_URGENCY.flatMap((group) =>
-    [...groups[group]].sort(byDueDateAscending).map((ticket) => ({
-      ticket,
-      group,
-      badge: dueDateBadge(group, ticket),
-    })),
-  );
+  const rows =
+    sortOrder === 'newest'
+      ? GROUP_URGENCY.flatMap((group) =>
+          groups[group].map((ticket) => ({
+            ticket,
+            group,
+            badge: dueDateBadge(group, ticket),
+          })),
+        ).sort((a, b) => byNewestFirst(a.ticket, b.ticket))
+      : GROUP_URGENCY.flatMap((group) =>
+          [...groups[group]].sort(byDueDateAscending).map((ticket) => ({
+            ticket,
+            group,
+            badge: dueDateBadge(group, ticket),
+          })),
+        );
 
   return {
     rows,

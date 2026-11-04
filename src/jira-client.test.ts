@@ -13,6 +13,7 @@ const makeIssue = (overrides: Record<string, unknown> = {}) => ({
     },
     priority: { name: 'High' },
     duedate: '2026-10-25',
+    created: '2026-10-01T09:30:00.000+0000',
     project: { name: 'Platform' },
     ...overrides,
   },
@@ -57,6 +58,16 @@ describe('JQL query', () => {
     expect(body.jql).toBe('assignee = currentUser() AND statusCategory != Done AND status != "Refinement" ORDER BY due ASC');
   });
 
+  it('asks Jira for the created field', async () => {
+    const fetchSpy = mockFetch(200, { issues: [makeIssue()], isLast: true });
+
+    await fetchJiraTickets(CREDS);
+
+    const [, init] = fetchSpy.mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    expect(body.fields).toContain('created');
+  });
+
   it('POSTs to the correct Jira Cloud search endpoint', async () => {
     const fetchSpy = mockFetch(200, { issues: [makeIssue()], isLast: true });
 
@@ -93,6 +104,7 @@ describe('Ticket normalisation', () => {
         statusCategory: 'inprogress',
         priority: 'high',
         dueDate: '2026-10-25',
+        created: '2026-10-01T09:30:00.000+0000',
         url: 'https://mycompany.atlassian.net/browse/PROJ-1',
         board: 'Platform',
       },

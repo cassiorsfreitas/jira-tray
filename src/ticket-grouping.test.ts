@@ -10,6 +10,7 @@ const base: Omit<Ticket, 'dueDate'> = {
   priority: 'medium',
   url: 'https://example.atlassian.net/browse/PROJ-1',
   board: 'Example Project',
+  created: '2026-10-01T09:30:00.000+0000',
 };
 
 const TODAY = '2026-10-26';

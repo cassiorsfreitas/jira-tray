@@ -8,6 +8,8 @@ export interface Ticket {
   statusCategory: StatusCategory;
   priority: Priority;
   dueDate: string | null;
+  /** Creation timestamp as returned by Jira's `created` field (e.g. 2026-10-01T09:30:00.000+0000). */
+  created: string;
   url: string;
   board: string;
 }
@@ -59,6 +61,7 @@ interface JiraIssue {
     };
     priority: { name: string };
     duedate?: string | null;
+    created: string;
     project: { name: string };
   };
 }
@@ -71,7 +74,7 @@ export async function fetchJiraTickets({ domain, email, token }: JiraCredentials
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ jql: JQL, fields: ['summary', 'status', 'priority', 'duedate', 'project'] }),
+    body: JSON.stringify({ jql: JQL, fields: ['summary', 'status', 'priority', 'duedate', 'created', 'project'] }),
   });
 
   if (!response.ok) {
@@ -87,6 +90,7 @@ export async function fetchJiraTickets({ domain, email, token }: JiraCredentials
     statusCategory: mapStatusCategory(issue.fields.status.statusCategory.key),
     priority: mapPriority(issue.fields.priority.name),
     dueDate: issue.fields.duedate ?? null,
+    created: issue.fields.created,
     url: `https://${domain}/browse/${issue.key}`,
     board: issue.fields.project.name,
   }));
