@@ -277,7 +277,7 @@ function SearchField({
       style={{
         height: SEARCH_HEIGHT,
         boxSizing: "border-box",
-        padding: "8px 12px",
+        padding: "12px",
         flexShrink: 0,
       }}
     >
@@ -385,8 +385,8 @@ function FilterTabRow({
         boxSizing: "border-box",
         display: "flex",
         alignItems: "center",
-        gap: 4,
-        padding: "0 12px 6px",
+        gap: 2,
+        padding: "4px 12px",
         flexShrink: 0,
       }}
     >
@@ -403,7 +403,7 @@ function FilterTabRow({
             height: 24,
             padding: "0 10px",
             fontSize: 11,
-            fontWeight: selected ? 600 : 400,
+            fontWeight: 400,
             cursor: "pointer",
             color: selected ? "var(--text-primary)" : "var(--text-secondary)",
             backgroundColor: selected ? "var(--surface-1)" : "transparent",
@@ -755,6 +755,7 @@ export function App() {
         style={{
           flexShrink: 0,
           borderBottom: `${CONTROLS_DIVIDER_HEIGHT}px solid var(--border)`,
+          paddingBottom: "4px",
         }}
       >
         <SearchField

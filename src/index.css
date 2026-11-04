@@ -103,7 +103,7 @@ body {
 /* Replace the browser's default (accent-coloured) focus ring with a white border. */
 .search-input:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
 .sort-trigger {
