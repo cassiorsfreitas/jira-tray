@@ -55,7 +55,7 @@ describe('JQL query', () => {
 
     const [, init] = fetchSpy.mock.calls[0];
     const body = JSON.parse(init?.body as string);
-    expect(body.jql).toBe('assignee = currentUser() AND status in ("To Do", "In Progress") ORDER BY due ASC');
+    expect(body.jql).toBe('assignee = currentUser() AND statusCategory != Done ORDER BY due ASC');
   });
 
   it('asks Jira for the created field', async () => {
@@ -156,7 +156,7 @@ describe('statusCategory derivation', () => {
       mockFetch(200, {
         issues: [
           makeIssue({
-            status: { name: 'Some Status', statusCategory: { key: categoryKey } },
+            status: { name: 'To Do', statusCategory: { key: categoryKey } },
           }),
         ],
         isLast: true,
@@ -167,6 +167,56 @@ describe('statusCategory derivation', () => {
       expect(ticket.statusCategory).toBe(expected);
     });
   }
+});
+
+// --- Status filtering ---
+describe('Status filtering', () => {
+  const issueWithStatus = (key: string, name: string, categoryKey = 'indeterminate') => ({
+    ...makeIssue({ status: { name, statusCategory: { key: categoryKey } } }),
+    key,
+  });
+
+  it('keeps only Tickets whose Status is To Do or In Progress', async () => {
+    mockFetch(200, {
+      issues: [
+        issueWithStatus('A-1', 'To Do', 'new'),
+        issueWithStatus('A-2', 'In Progress'),
+        issueWithStatus('A-3', 'Development'),
+        issueWithStatus('A-4', 'In Review'),
+        issueWithStatus('A-5', 'Refinement', 'new'),
+      ],
+      isLast: true,
+    });
+
+    const tickets = await fetchJiraTickets(CREDS);
+
+    expect(tickets.map((ticket) => ticket.key)).toEqual(['A-1', 'A-2']);
+  });
+
+  it('keeps a "To Do" Status whatever its Status Category (two Jira Statuses can share the name)', async () => {
+    mockFetch(200, {
+      issues: [
+        issueWithStatus('TT-1', 'To Do', 'new'),
+        issueWithStatus('MI-1', 'To Do', 'indeterminate'),
+      ],
+      isLast: true,
+    });
+
+    const tickets = await fetchJiraTickets(CREDS);
+
+    expect(tickets.map((ticket) => ticket.key)).toEqual(['TT-1', 'MI-1']);
+  });
+
+  it('matches the Status name case-insensitively', async () => {
+    mockFetch(200, {
+      issues: [issueWithStatus('A-1', 'TO DO', 'new'), issueWithStatus('A-2', ' in progress ')],
+      isLast: true,
+    });
+
+    const tickets = await fetchJiraTickets(CREDS);
+
+    expect(tickets.map((ticket) => ticket.key)).toEqual(['A-1', 'A-2']);
+  });
 });
 
 // --- Slice 6: Error handling ---
