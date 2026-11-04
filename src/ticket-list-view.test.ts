@@ -352,7 +352,7 @@ describe('buildTicketListView Sync State', () => {
 
   function syncState(sync: {
     lastSyncedAt?: number | null;
-    lastAttemptFailed?: boolean;
+    lastErrorAt?: number | null;
     now?: number;
   }) {
     return buildTicketListView({ tickets: [], today: TODAY, ...sync })
@@ -396,14 +396,28 @@ describe('buildTicketListView Sync State', () => {
 
   it('reads "Sync failed" when the last attempt failed', () => {
     expect(
-      syncState({ lastSyncedAt: NOW, lastAttemptFailed: true, now: NOW }),
+      syncState({
+        lastSyncedAt: NOW,
+        lastErrorAt: NOW + MINUTE,
+        now: NOW + MINUTE,
+      }),
     ).toEqual({ label: 'Sync failed', failed: true });
   });
 
   it('reads "Sync failed" when the first attempt failed', () => {
     expect(
-      syncState({ lastSyncedAt: null, lastAttemptFailed: true, now: NOW }),
+      syncState({ lastSyncedAt: null, lastErrorAt: NOW, now: NOW }),
     ).toEqual({ label: 'Sync failed', failed: true });
+  });
+
+  it('recovers to "Synced" when a successful fetch follows the last error', () => {
+    expect(
+      syncState({
+        lastSyncedAt: NOW + MINUTE,
+        lastErrorAt: NOW,
+        now: NOW + MINUTE,
+      }),
+    ).toEqual({ label: 'Synced just now', failed: false });
   });
 
   it('has no Sync State before the first attempt completes', () => {

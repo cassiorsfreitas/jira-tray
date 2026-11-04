@@ -46,8 +46,8 @@ export interface TicketListViewInput {
   sortOrder?: SortOrder;
   /** Time of the last successful fetch, in epoch milliseconds. */
   lastSyncedAt?: number | null;
-  /** Whether the most recent fetch attempt failed. */
-  lastAttemptFailed?: boolean;
+  /** Time of the last failed fetch, in epoch milliseconds. */
+  lastErrorAt?: number | null;
   /** Current time in epoch milliseconds, used to age the Sync State. */
   now?: number;
 }
@@ -77,8 +77,7 @@ export interface TicketListView {
 
 /**
  * Why the list has no rows. A discriminated union on `kind` so that new
- * reasons (e.g. no Tickets in the selected Filter Tab) can be added as extra
- * variants; renderers should switch on `kind`.
+ * reasons can be added as extra variants; renderers should switch on `kind`.
  */
 export type EmptyReason =
   | { kind: 'none' }
@@ -132,6 +131,18 @@ function byDueDateAscending(a: Ticket, b: Ticket): number {
   return a.dueDate < b.dueDate ? -1 : 1;
 }
 
+function createdTime(ticket: Ticket): number {
+  const time = Date.parse(ticket.created);
+  return Number.isNaN(time) ? -Infinity : time;
+}
+
+function byNewestFirst(a: Ticket, b: Ticket): number {
+  const aTime = createdTime(a);
+  const bTime = createdTime(b);
+  if (aTime !== bTime) return aTime < bTime ? 1 : -1;
+  return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
+}
+
 // ── Filter Tabs ────────────────────────────────────────────────────────────
 
 /** Tickets with the `inreview` Status Category belong to "all" only. */
@@ -169,6 +180,8 @@ function matchesSearch(ticket: Ticket, searchText: string): boolean {
   );
 }
 
+// ── Empty reason ───────────────────────────────────────────────────────────
+
 function emptyReasonFor(
   allTickets: Ticket[],
   searched: Ticket[],
@@ -181,30 +194,21 @@ function emptyReasonFor(
   return { kind: 'noTicketsInTab', tab: filterTab };
 }
 
-function createdTime(ticket: Ticket): number {
-  const time = Date.parse(ticket.created);
-  return Number.isNaN(time) ? -Infinity : time;
-}
-
-function byNewestFirst(a: Ticket, b: Ticket): number {
-  const aTime = createdTime(a);
-  const bTime = createdTime(b);
-  if (aTime !== bTime) return aTime < bTime ? 1 : -1;
-  return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
-}
-
 // ── Sync State ─────────────────────────────────────────────────────────────
 
 const MS_PER_MINUTE = 60_000;
 
+/** Failed when the last error is newer than the last success, or never succeeded. */
 function computeSyncState({
   lastSyncedAt,
-  lastAttemptFailed,
+  lastErrorAt,
   now,
 }: Pick<
   TicketListViewInput,
-  'lastSyncedAt' | 'lastAttemptFailed' | 'now'
+  'lastSyncedAt' | 'lastErrorAt' | 'now'
 >): SyncState | null {
+  const lastAttemptFailed =
+    lastErrorAt != null && (lastSyncedAt == null || lastErrorAt > lastSyncedAt);
   if (lastAttemptFailed) return { label: 'Sync failed', failed: true };
   if (lastSyncedAt == null || now === undefined) return null;
   const minutes = Math.floor((now - lastSyncedAt) / MS_PER_MINUTE);
@@ -223,7 +227,7 @@ export function buildTicketListView({
   searchText,
   sortOrder = DEFAULT_SORT_ORDER,
   lastSyncedAt,
-  lastAttemptFailed,
+  lastErrorAt,
   now,
 }: TicketListViewInput): TicketListView {
   const query = (searchText ?? '').trim().toLowerCase();
@@ -235,27 +239,24 @@ export function buildTicketListView({
     today,
   );
 
-  const rows =
+  const rows: TicketRow[] = GROUP_URGENCY.flatMap((group) =>
+    groups[group].map((ticket) => ({
+      ticket,
+      group,
+      badge: dueDateBadge(group, ticket),
+    })),
+  ).sort(
     sortOrder === 'newest'
-      ? GROUP_URGENCY.flatMap((group) =>
-          groups[group].map((ticket) => ({
-            ticket,
-            group,
-            badge: dueDateBadge(group, ticket),
-          })),
-        ).sort((a, b) => byNewestFirst(a.ticket, b.ticket))
-      : GROUP_URGENCY.flatMap((group) =>
-          [...groups[group]].sort(byDueDateAscending).map((ticket) => ({
-            ticket,
-            group,
-            badge: dueDateBadge(group, ticket),
-          })),
-        );
+      ? (a, b) => byNewestFirst(a.ticket, b.ticket)
+      : (a, b) =>
+          GROUP_URGENCY.indexOf(a.group) - GROUP_URGENCY.indexOf(b.group) ||
+          byDueDateAscending(a.ticket, b.ticket),
+  );
 
   return {
     rows,
     tabs: buildTabs(searched, filterTab),
     emptyReason: emptyReasonFor(tickets, searched, rows, filterTab),
-    syncState: computeSyncState({ lastSyncedAt, lastAttemptFailed, now }),
+    syncState: computeSyncState({ lastSyncedAt, lastErrorAt, now }),
   };
 }

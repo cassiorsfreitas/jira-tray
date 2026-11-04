@@ -399,7 +399,7 @@ function FilterTabRow({
   );
 }
 
-function NoTicketsInTabState({ label }: { label: string }) {
+function CenteredMessage({ children }: { children: string }) {
   return (
     <div
       style={{
@@ -410,41 +410,7 @@ function NoTicketsInTabState({ label }: { label: string }) {
       }}
     >
       <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-        No tickets {label.toLowerCase()}
-      </p>
-    </div>
-  );
-}
-
-function NoSearchMatchState() {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-      }}
-    >
-      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-        No tickets match
-      </p>
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-      }}
-    >
-      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-        You're all caught up
+        {children}
       </p>
     </div>
   );
@@ -616,9 +582,6 @@ export function App() {
   }, []);
 
   const today = localDateString(new Date());
-  const lastAttemptFailed =
-    lastErrorAt !== null &&
-    (lastSyncedAt === null || lastErrorAt > lastSyncedAt);
   const { rows, tabs, emptyReason, syncState } = buildTicketListView({
     tickets: tickets ?? [],
     today,
@@ -626,7 +589,7 @@ export function App() {
     searchText,
     sortOrder,
     lastSyncedAt,
-    lastAttemptFailed,
+    lastErrorAt,
     now,
   });
   const isLoading = tickets === null && error === null;
@@ -719,13 +682,13 @@ export function App() {
               ))}
             </ul>
           ) : emptyReason.kind === 'noSearchMatch' ? (
-            <NoSearchMatchState />
+            <CenteredMessage>No tickets match</CenteredMessage>
           ) : emptyReason.kind === 'noTicketsInTab' ? (
-            <NoTicketsInTabState
-              label={tabs.find((t) => t.selected)?.label ?? ''}
-            />
+            <CenteredMessage>
+              {`No tickets ${(tabs.find((t) => t.selected)?.label ?? '').toLowerCase()}`}
+            </CenteredMessage>
           ) : (
-            <EmptyState />
+            <CenteredMessage>You're all caught up</CenteredMessage>
           )}
         </main>
       )}
