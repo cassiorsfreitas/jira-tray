@@ -35,10 +35,23 @@ export interface TicketListViewInput {
   today: string;
   /** Defaults to "Due date". */
   sortOrder?: SortOrder;
+  /** Time of the last successful fetch, in epoch milliseconds. */
+  lastSyncedAt?: number | null;
+  /** Whether the most recent fetch attempt failed. */
+  lastAttemptFailed?: boolean;
+  /** Current time in epoch milliseconds, used to age the Sync State. */
+  now?: number;
+}
+
+export interface SyncState {
+  label: string;
+  failed: boolean;
 }
 
 export interface TicketListView {
   rows: TicketRow[];
+  /** Null before the first fetch attempt completes. */
+  syncState: SyncState | null;
 }
 
 // ── Due Date Badge ─────────────────────────────────────────────────────────
@@ -99,12 +112,36 @@ function byNewestFirst(a: Ticket, b: Ticket): number {
   return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
 }
 
+// ── Sync State ─────────────────────────────────────────────────────────────
+
+const MS_PER_MINUTE = 60_000;
+
+function computeSyncState({
+  lastSyncedAt,
+  lastAttemptFailed,
+  now,
+}: Pick<
+  TicketListViewInput,
+  'lastSyncedAt' | 'lastAttemptFailed' | 'now'
+>): SyncState | null {
+  if (lastAttemptFailed) return { label: 'Sync failed', failed: true };
+  if (lastSyncedAt == null || now === undefined) return null;
+  const minutes = Math.floor((now - lastSyncedAt) / MS_PER_MINUTE);
+  return {
+    label: minutes < 1 ? 'Synced just now' : `Synced ${minutes}m ago`,
+    failed: false,
+  };
+}
+
 // ── Entry point ────────────────────────────────────────────────────────────
 
 export function buildTicketListView({
   tickets,
   today,
   sortOrder = DEFAULT_SORT_ORDER,
+  lastSyncedAt,
+  lastAttemptFailed,
+  now,
 }: TicketListViewInput): TicketListView {
   const groups = groupTickets(tickets, today);
 
@@ -125,5 +162,8 @@ export function buildTicketListView({
           })),
         );
 
-  return { rows };
+  return {
+    rows,
+    syncState: computeSyncState({ lastSyncedAt, lastAttemptFailed, now }),
+  };
 }
