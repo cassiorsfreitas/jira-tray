@@ -447,7 +447,7 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
         flexShrink: 0,
         height: FOOTER_HEIGHT,
         boxSizing: "border-box",
-        padding: "0 12px",
+        padding: "0 16px",
         borderTop: "1px solid var(--border)",
         fontSize: 11,
         color: failed ? "var(--accent-red)" : "var(--text-secondary)",
@@ -457,8 +457,8 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
         <>
           <span
             style={{
-              width: 6,
-              height: 6,
+              width: 4,
+              height: 4,
               borderRadius: "50%",
               flexShrink: 0,
               backgroundColor: failed
@@ -466,9 +466,7 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
                 : "var(--text-secondary)",
             }}
           />
-          <span style={{ fontWeight: failed ? 600 : 400 }}>
-            {syncState.label}
-          </span>
+          <span style={{ fontWeight: 400 }}>{syncState.label}</span>
         </>
       )}
     </footer>
@@ -565,6 +563,7 @@ function ListHeader({
           letterSpacing: "0.08em",
           textTransform: "uppercase",
           color: "var(--text-secondary)",
+          marginLeft: "4px",
         }}
       >
         My work
