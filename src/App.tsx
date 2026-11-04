@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Ticket } from './jira-client';
 import type { Preferences } from './preferences-store';
+import { localDateString } from './ticket-grouping';
 import { buildTicketListView, SORT_ORDER_OPTIONS } from './ticket-list-view';
 import type {
   FilterTab,
@@ -614,7 +615,7 @@ export function App() {
     };
   }, []);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateString(new Date());
   const lastAttemptFailed =
     lastErrorAt !== null &&
     (lastSyncedAt === null || lastErrorAt > lastSyncedAt);

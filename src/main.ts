@@ -7,7 +7,7 @@ import { loadCredentials, seedCredentialsFromEnv } from './credentials-store';
 import { loadPreferences, savePreferences } from './preferences-store';
 import type { Preferences } from './preferences-store';
 import { fetchJiraTickets } from './jira-client';
-import { groupTickets } from './ticket-grouping';
+import { groupTickets, localDateString } from './ticket-grouping';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -48,7 +48,7 @@ app.whenReady().then(() => {
       const tickets = await fetchJiraTickets(credentials);
       popupWindow.webContents.send('tickets', tickets);
 
-      const today = new Date().toISOString().slice(0, 10);
+      const today = localDateString(new Date());
       const { overdue, today: todayTickets } = groupTickets(tickets, today);
       updateBadge(overdue.length + todayTickets.length);
     } catch (err) {
