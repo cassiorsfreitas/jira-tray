@@ -11,4 +11,4 @@ Replace `/Applications/jira-tray.app` with a fresh build of the current working 
 4. **Move it in.** `mv out/jira-tray-darwin-*/jira-tray.app /Applications/` (the folder suffix is the host architecture).
 5. **Smoke-test.** `open /Applications/jira-tray.app`, wait a few seconds, confirm the process from step 1 is running, then quit it the same way. Leave it closed; the user starts it themselves.
 
-`codesign -v` on the packaged app reports "invalid Info.plist"; the app still launches, so the smoke test in step 5 is the check that counts.
+`codesign -v /Applications/jira-tray.app` must print nothing. If it says "invalid Info.plist", the ad-hoc re-signing in `forge.config.mts` was lost: macOS refuses such an app any Keychain access, so Settings cannot save the API token ("Secure storage is not available"). The first time a new build touches the Keychain, macOS asks to allow it; the answer is "Always Allow".

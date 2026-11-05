@@ -14,6 +14,16 @@ const config: ForgeConfig = {
     extendInfo: {
       LSUIElement: '1',
     },
+    // Editing Info.plist and flipping fuses break the signature that ships with
+    // Electron, and macOS then refuses the app any Keychain access, which
+    // safeStorage needs to encrypt the API token. Sign the finished bundle
+    // again, ad hoc: no Apple Developer account needed. Without a team ID the
+    // hardened runtime would stop dyld from loading Electron Framework.
+    osxSign: {
+      identity: '-',
+      identityValidation: false,
+      optionsForFile: () => ({ hardenedRuntime: false }),
+    },
   },
   rebuildConfig: {},
   makers: [
