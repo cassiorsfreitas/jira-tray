@@ -132,10 +132,15 @@ const SYMBOLS: Record<string, string> = {
   Right: '→',
 };
 
-/** `Control+Alt+Command+J` → `⌃⌥⌘J`. */
-export function formatAccelerator(accelerator: string): string {
+/** `Control+Alt+Command+J` → `['⌃', '⌥', '⌘', 'J']`, one entry per key cap. */
+export function acceleratorKeys(accelerator: string): string[] {
   const parts = accelerator.split('+');
   const key = parts.pop() ?? '';
   const modifiers = MODIFIERS.filter((m) => parts.includes(m));
-  return modifiers.map((m) => SYMBOLS[m]).join('') + (SYMBOLS[key] ?? key);
+  return [...modifiers.map((m) => SYMBOLS[m]), SYMBOLS[key] ?? key];
+}
+
+/** `Control+Alt+Command+J` → `⌃⌥⌘J`. */
+export function formatAccelerator(accelerator: string): string {
+  return acceleratorKeys(accelerator).join('');
 }

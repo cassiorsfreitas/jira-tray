@@ -1,46 +1,80 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   DEFAULT_TOGGLE_SHORTCUT,
+  acceleratorKeys,
   formatAccelerator,
   recordShortcut,
 } from '../../shared/shortcut';
 import type { ShortcutSettings } from '../../shared/shortcut';
+import { Keycaps } from './Keycaps';
 
 type Status =
   | { kind: 'idle' }
   | { kind: 'ok'; message: string }
   | { kind: 'error'; message: string };
 
-/** Shortcuts that work while the Popup is focused. Fixed. */
-const POPUP_SHORTCUTS: [keys: string, action: string][] = [
-  ['⌘R', 'Refresh tickets'],
-  ['⌘F', 'Search'],
-  ['⌃J / ⌃K', 'Move the selection'],
-  ['Tab / ⇧Tab', 'Switch Filter Tab'],
-  ['Enter', 'Open the selected ticket'],
-  ['⌘,', 'Open Settings'],
-];
+/** Shortcuts that work while the Popup is focused. Fixed. Several combinations are alternatives. */
+const POPUP_SHORTCUTS: { action: string; hint: string; combos: string[][] }[] =
+  [
+    {
+      action: 'Refresh tickets',
+      hint: 'Fetch your tickets again',
+      combos: [['⌘', 'R']],
+    },
+    { action: 'Search', hint: 'Focus the search field', combos: [['⌘', 'F']] },
+    {
+      action: 'Move the selection',
+      hint: 'Down and up the list',
+      combos: [
+        ['⌃', 'J'],
+        ['⌃', 'K'],
+      ],
+    },
+    {
+      action: 'Switch Filter Tab',
+      hint: 'Next and previous tab',
+      combos: [['Tab'], ['⇧', 'Tab']],
+    },
+    {
+      action: 'Open the selected ticket',
+      hint: 'In your browser',
+      combos: [['Enter']],
+    },
+    { action: 'Open Settings', hint: 'From the Popup', combos: [['⌘', ',']] },
+    {
+      action: 'Close the Popup',
+      hint: 'Same as the global shortcut',
+      combos: [['Esc']],
+    },
+  ];
 
 const STATUS_COLOR = {
   ok: 'var(--accent-green)',
   error: 'var(--accent-red)',
 };
 
-function Keys({ children }: { children: React.ReactNode }) {
+/** One row of a shortcut card: what it does on the left, the keys on the right. */
+function ShortcutRow({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint: string;
+  children: React.ReactNode;
+}) {
   return (
-    <kbd
-      style={{
-        padding: '2px 8px',
-        fontFamily: 'inherit',
-        fontSize: 12,
-        color: 'var(--text-primary)',
-        background: 'var(--surface-1)',
-        border: '1px solid var(--border)',
-        borderRadius: 6,
-      }}
-    >
-      {children}
-    </kbd>
+    <div className="shortcut-row">
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 500 }}>{title}</div>
+        <div
+          style={{ marginTop: 3, fontSize: 11, color: 'var(--text-secondary)' }}
+        >
+          {hint}
+        </div>
+      </div>
+      <div style={{ flexShrink: 0 }}>{children}</div>
+    </div>
   );
 }
 
@@ -113,11 +147,12 @@ export function KeyboardPane() {
   }
 
   const { accelerator, active } = shortcut;
-  const label = recording
-    ? 'Press the new shortcut…'
+  const recorderKeys = recording
+    ? ['Press the new shortcut…']
     : accelerator
-      ? formatAccelerator(accelerator)
-      : 'Not set';
+      ? acceleratorKeys(accelerator)
+      : ['Not set'];
+  const recorderTone = recording ? 'accent' : accelerator ? 'default' : 'muted';
 
   // A stored shortcut the system refused (e.g. taken by another app) is not active.
   const inactive =
@@ -129,7 +164,7 @@ export function KeyboardPane() {
         flex: 1,
         minWidth: 0,
         overflowY: 'auto',
-        padding: '24px 28px 20px',
+        padding: '24px 28px 40px',
       }}
     >
       <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>
@@ -145,36 +180,24 @@ export function KeyboardPane() {
         Works even when Jira Tray is in the background.
       </p>
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 12,
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 13 }}>Open Jira Tray</div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-            Opens and closes the Popup
-          </div>
-        </div>
-        <button
-          type="button"
-          aria-label="Open Jira Tray shortcut"
-          className="settings-button shortcut-recorder"
-          aria-pressed={recording}
-          onClick={() => {
-            if (recording) return;
-            setStatus({ kind: 'idle' });
-            setRecordingState(true);
-          }}
-          onKeyDown={onRecorderKeyDown}
-          onBlur={() => setRecordingState(false)}
-          style={{ minWidth: 120 }}
-        >
-          {label}
-        </button>
+      <div className="shortcut-card">
+        <ShortcutRow title="Open Jira Tray" hint="Opens and closes the Popup">
+          <button
+            type="button"
+            aria-label="Open Jira Tray shortcut"
+            className="shortcut-recorder"
+            aria-pressed={recording}
+            onClick={() => {
+              if (recording) return;
+              setStatus({ kind: 'idle' });
+              setRecordingState(true);
+            }}
+            onKeyDown={onRecorderKeyDown}
+            onBlur={() => setRecordingState(false)}
+          >
+            <Keycaps keys={recorderKeys} tone={recorderTone} />
+          </button>
+        </ShortcutRow>
       </div>
 
       <div
@@ -222,25 +245,36 @@ export function KeyboardPane() {
         </button>
       </div>
 
-      <h2 style={{ margin: '22px 0 8px', fontSize: 14, fontWeight: 600 }}>
+      <h2 style={{ margin: '28px 0 12px', fontSize: 14, fontWeight: 600 }}>
         In the Popup
       </h2>
-      <div style={{ borderTop: '1px solid var(--border)' }}>
-        {POPUP_SHORTCUTS.map(([keys, action]) => (
-          <div
-            key={keys}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '5px 0',
-              fontSize: 12,
-              borderBottom: '1px solid var(--border)',
-            }}
-          >
-            <span style={{ color: 'var(--text-secondary)' }}>{action}</span>
-            <Keys>{keys}</Keys>
-          </div>
+      <div className="shortcut-card">
+        {POPUP_SHORTCUTS.map(({ action, hint, combos }) => (
+          <ShortcutRow key={action} title={action} hint={hint}>
+            <span
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+            >
+              {combos.map((keys, i) => (
+                <span
+                  key={keys.join('')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  {i > 0 && (
+                    <span
+                      style={{ fontSize: 11, color: 'var(--text-secondary)' }}
+                    >
+                      /
+                    </span>
+                  )}
+                  <Keycaps keys={keys} />
+                </span>
+              ))}
+            </span>
+          </ShortcutRow>
         ))}
       </div>
     </div>

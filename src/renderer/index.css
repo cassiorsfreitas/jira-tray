@@ -339,9 +339,72 @@ body {
   text-decoration: underline;
 }
 
-.shortcut-recorder[aria-pressed='true'] {
+/* A card of shortcut rows: bordered, rows split by a divider. */
+.shortcut-card {
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+.shortcut-row + .shortcut-row {
+  border-top: 1px solid var(--border);
+}
+
+/* One key of a combination. */
+.keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.keycap-accent {
   color: var(--accent-blue);
   border-color: var(--accent-blue);
+}
+
+.keycap-muted {
+  color: var(--text-secondary);
+  background: none;
+  border-style: dashed;
+}
+
+/* The button around the keys of the global shortcut: click it, then press the new one. */
+.shortcut-recorder {
+  padding: 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.shortcut-recorder:hover,
+.shortcut-recorder[aria-pressed='true'] {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.shortcut-recorder:focus-visible {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 /* The orange dot on the Settings button, same orange as the Alert Icon, with a
