@@ -1,9 +1,9 @@
 {
   "name": "jira-tray",
-  "productName": "jira-tray",
+  "productName": "Jira Tray",
   "version": "1.0.0",
   "private": true,
-  "description": "My Electron application description",
+  "description": "macOS menu bar app that shows the Jira tickets assigned to you, grouped by due date",
   "keywords": [],
   "license": "MIT",
   "author": {
@@ -20,7 +20,8 @@
     "lint:fix": "oxlint --fix && oxfmt --write",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "generate-icons": "node scripts/generate-icons.mjs"
+    "generate-icons": "node scripts/generate-icons.mjs",
+    "generate-app-icon": "node scripts/generate-app-icon.mjs"
   },
   "devDependencies": {
     "@electron-forge/cli": "^8.0.1",
