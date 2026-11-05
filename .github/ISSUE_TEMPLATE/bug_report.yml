@@ -1,0 +1,53 @@
+name: Bug report
+description: Something does not work the way it should
+labels: ['bug', 'needs-triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please **never paste your API token**, and blur ticket titles or other private Jira content in screenshots and logs.
+
+        Common problems are covered in the [troubleshooting section](https://github.com/cassiorsfreitas/jira-tray#troubleshooting) of the README.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you see? Include the error text if the popup or Settings shows one.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the popup
+        2. Click ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and chip
+      placeholder: e.g. macOS 15.1, Apple Silicon
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Jira Tray version
+      description: Which commit did you build, and did you run it with `npm start` or as the packaged app?
+      placeholder: e.g. commit 5f0ba01 from main, packaged app
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots, the output of `npm start` in a terminal, or anything that might help.

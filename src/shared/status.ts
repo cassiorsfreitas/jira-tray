@@ -15,7 +15,12 @@ interface ShownStatus {
 // "indeterminate" category on one project), and a JQL name match only picks one.
 // Adding a Status means adding one row.
 const SHOWN_STATUSES: readonly ShownStatus[] = [
-  { name: 'in progress', category: 'inprogress', label: 'In progress', color: '#57c1ff' },
+  {
+    name: 'in progress',
+    category: 'inprogress',
+    label: 'In progress',
+    color: '#57c1ff',
+  },
   { name: 'to do', category: 'todo', label: 'To do', color: '#9c9c9d' },
 ];
 
@@ -25,13 +30,17 @@ export const STATUS_CATEGORIES: readonly StatusCategory[] = SHOWN_STATUSES.map(
 );
 
 /** The Status Category of a Status name, or undefined when we don't show it. */
-export function statusCategoryOf(statusName: string): StatusCategory | undefined {
+export function statusCategoryOf(
+  statusName: string,
+): StatusCategory | undefined {
   const name = statusName.trim().toLowerCase();
   return SHOWN_STATUSES.find((status) => status.name === name)?.category;
 }
 
 function shownStatus(category: StatusCategory): ShownStatus {
-  return SHOWN_STATUSES.find((status) => status.category === category) as ShownStatus;
+  return SHOWN_STATUSES.find(
+    (status) => status.category === category,
+  ) as ShownStatus;
 }
 
 /** UI copy for a Status Category, e.g. "In progress". */

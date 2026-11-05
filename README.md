@@ -1,5 +1,7 @@
 # Jira Tray
 
+[![CI](https://github.com/cassiorsfreitas/jira-tray/actions/workflows/ci.yml/badge.svg)](https://github.com/cassiorsfreitas/jira-tray/actions/workflows/ci.yml)
+
 A macOS menu bar app that shows the Jira tickets assigned to you, grouped by how urgent their due date is. One click or one shortcut, no browser tab.
 
 <p align="center">

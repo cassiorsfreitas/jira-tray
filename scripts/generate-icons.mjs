@@ -19,9 +19,13 @@ async function toBase64(svgBuffer, size) {
   return buf.toString('base64');
 }
 
-const defaultSvg    = readFileSync(join(__dirname, '../src/assets/tray-icon.svg'));
-const alertSvg      = readFileSync(join(__dirname, '../src/assets/tray-icon-alert.svg'));
-const alertDarkSvg  = readFileSync(join(__dirname, '../src/assets/tray-icon-alert-dark.svg'));
+const defaultSvg = readFileSync(join(__dirname, '../src/assets/tray-icon.svg'));
+const alertSvg = readFileSync(
+  join(__dirname, '../src/assets/tray-icon-alert.svg'),
+);
+const alertDarkSvg = readFileSync(
+  join(__dirname, '../src/assets/tray-icon-alert-dark.svg'),
+);
 
 const [b16, b32, a16, a32, ad16, ad32] = await Promise.all([
   toBase64(defaultSvg, 16),
@@ -38,14 +42,22 @@ console.log('');
 console.log('// Default icon @2x — paste as TRAY_ICON_2X in tray.ts');
 console.log(`'${b32}'`);
 console.log('');
-console.log('// Alert icon (light menu bar) — paste as TRAY_ICON_ALERT_1X in tray.ts');
+console.log(
+  '// Alert icon (light menu bar) — paste as TRAY_ICON_ALERT_1X in tray.ts',
+);
 console.log(`'${a16}'`);
 console.log('');
-console.log('// Alert icon (light menu bar) @2x — paste as TRAY_ICON_ALERT_2X in tray.ts');
+console.log(
+  '// Alert icon (light menu bar) @2x — paste as TRAY_ICON_ALERT_2X in tray.ts',
+);
 console.log(`'${a32}'`);
 console.log('');
-console.log('// Alert icon (dark menu bar) — paste as TRAY_ICON_ALERT_DARK_1X in tray.ts');
+console.log(
+  '// Alert icon (dark menu bar) — paste as TRAY_ICON_ALERT_DARK_1X in tray.ts',
+);
 console.log(`'${ad16}'`);
 console.log('');
-console.log('// Alert icon (dark menu bar) @2x — paste as TRAY_ICON_ALERT_DARK_2X in tray.ts');
+console.log(
+  '// Alert icon (dark menu bar) @2x — paste as TRAY_ICON_ALERT_DARK_2X in tray.ts',
+);
 console.log(`'${ad32}'`);

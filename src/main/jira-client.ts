@@ -17,10 +17,13 @@ export class JiraApiError extends Error {
 
 /** Jira rejected the Credentials (401 or 403), as opposed to being unreachable or failing. */
 export function isAuthError(err: unknown): boolean {
-  return err instanceof JiraApiError && (err.status === 401 || err.status === 403);
+  return (
+    err instanceof JiraApiError && (err.status === 401 || err.status === 403)
+  );
 }
 
-const JQL = 'assignee = currentUser() AND statusCategory != Done ORDER BY due ASC';
+const JQL =
+  'assignee = currentUser() AND statusCategory != Done ORDER BY due ASC';
 
 interface JiraIssue {
   key: string;
@@ -35,7 +38,11 @@ interface JiraIssue {
   };
 }
 
-export async function fetchJiraTickets({ domain, email, token }: JiraCredentials): Promise<Ticket[]> {
+export async function fetchJiraTickets({
+  domain,
+  email,
+  token,
+}: JiraCredentials): Promise<Ticket[]> {
   const response = await fetch(`https://${domain}/rest/api/3/search/jql`, {
     method: 'POST',
     headers: {
@@ -43,14 +50,21 @@ export async function fetchJiraTickets({ domain, email, token }: JiraCredentials
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ jql: JQL, fields: ['summary', 'status', 'duedate', 'created', 'project'] }),
+    body: JSON.stringify({
+      jql: JQL,
+      fields: ['summary', 'status', 'duedate', 'created', 'project'],
+    }),
   });
 
   if (!response.ok) {
     throw new JiraApiError(response.status, response.statusText);
   }
 
-  const data = (await response.json()) as { issues: JiraIssue[]; isLast: boolean; nextPageToken?: string };
+  const data = (await response.json()) as {
+    issues: JiraIssue[];
+    isLast: boolean;
+    nextPageToken?: string;
+  };
 
   return data.issues.flatMap((issue) => {
     const statusCategory = statusCategoryOf(issue.fields.status.name);
