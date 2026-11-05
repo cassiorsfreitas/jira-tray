@@ -149,3 +149,41 @@ export function CheckIcon() {
     </svg>
   );
 }
+
+export function SettingsIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M2 4.5h6.5M12.5 4.5H14M2 11.5h1.5M7.5 11.5H14" />
+      <circle cx="10.5" cy="4.5" r="2" />
+      <circle cx="5.5" cy="11.5" r="2" />
+    </svg>
+  );
+}
+
+export function ConnectionIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M6.5 9.5l3-3" />
+      <path d="M7 4.5l1-1a3 3 0 0 1 4.25 4.25l-1 1" />
+      <path d="M9 11.5l-1 1a3 3 0 0 1-4.25-4.25l1-1" />
+    </svg>
+  );
+}

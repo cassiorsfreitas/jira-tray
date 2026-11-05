@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockGet, mockSet, mockHas } = vi.hoisted(() => ({
-  mockGet: vi.fn(),
-  mockSet: vi.fn(),
-  mockHas: vi.fn(),
+const { data, encryptionAvailable } = vi.hoisted(() => ({
+  data: new Map<string, unknown>(),
+  encryptionAvailable: { value: true },
 }));
 
 vi.mock('electron-store', () => ({
@@ -11,85 +10,93 @@ vi.mock('electron-store', () => ({
   // `new Store()` works. When a constructor returns an object, JS uses that
   // object as the instance, so this gives us the same mock handle every time.
   default: vi.fn(function MockStore() {
-    return { get: mockGet, set: mockSet, has: mockHas };
+    return {
+      get: (key: string) => data.get(key),
+      set: (key: string, value: unknown) => data.set(key, value),
+    };
   }),
 }));
 
-// Import after mock is registered
-const { loadCredentials, seedCredentialsFromEnv } = await import('./credentials-store');
+vi.mock('electron', () => ({
+  safeStorage: {
+    isEncryptionAvailable: () => encryptionAvailable.value,
+    encryptString: (text: string) => Buffer.from(`enc:${text}`),
+    decryptString: (buffer: Buffer) => {
+      const text = buffer.toString();
+      if (!text.startsWith('enc:')) throw new Error('cannot decrypt');
+      return text.slice('enc:'.length);
+    },
+  },
+}));
+
+// Import after mocks are registered
+const { loadCredentials, saveCredentials } =
+  await import('./credentials-store');
+
+const CREDS = {
+  domain: 'test.atlassian.net',
+  email: 'a@b.com',
+  token: 'secret-token',
+};
+
+beforeEach(() => {
+  data.clear();
+  encryptionAvailable.value = true;
+});
 
 describe('loadCredentials', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('returns stored credentials when present', () => {
-    const creds = { domain: 'test.atlassian.net', email: 'a@b.com', token: 'tok' };
-    mockGet.mockReturnValue(creds);
-    expect(loadCredentials()).toEqual(creds);
-    expect(mockGet).toHaveBeenCalledWith('credentials');
+  it('returns null when nothing is stored', () => {
+    expect(loadCredentials()).toBeNull();
   });
 
-  it('returns null when store has no credentials', () => {
-    mockGet.mockReturnValue(undefined);
+  it('returns what saveCredentials stored', () => {
+    saveCredentials(CREDS);
+    expect(loadCredentials()).toEqual(CREDS);
+  });
+
+  it('returns null when the token can no longer be decrypted', () => {
+    data.set('credentials', {
+      domain: CREDS.domain,
+      email: CREDS.email,
+      encryptedToken: 'AAAA',
+    });
     expect(loadCredentials()).toBeNull();
+  });
+
+  it('migrates plain-text Credentials to encrypted storage', () => {
+    data.set('credentials', CREDS);
+
+    expect(loadCredentials()).toEqual(CREDS);
+
+    const stored = data.get('credentials') as Record<string, string>;
+    expect(stored).not.toHaveProperty('token');
+    expect(JSON.stringify(stored)).not.toContain(CREDS.token);
+    expect(loadCredentials()).toEqual(CREDS);
+  });
+
+  it('keeps using plain-text Credentials when encryption is not available', () => {
+    encryptionAvailable.value = false;
+    data.set('credentials', CREDS);
+
+    expect(loadCredentials()).toEqual(CREDS);
+    expect(data.get('credentials')).toEqual(CREDS);
   });
 });
 
-describe('seedCredentialsFromEnv', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    delete process.env.JIRA_DOMAIN;
-    delete process.env.JIRA_EMAIL;
-    delete process.env.JIRA_TOKEN;
+describe('saveCredentials', () => {
+  it('never stores the token as plain text', () => {
+    saveCredentials(CREDS);
+
+    const stored = data.get('credentials') as Record<string, string>;
+    expect(stored.domain).toBe(CREDS.domain);
+    expect(stored.email).toBe(CREDS.email);
+    expect(JSON.stringify(stored)).not.toContain(CREDS.token);
   });
 
-  it('does nothing when store already has credentials', () => {
-    mockHas.mockReturnValue(true);
-    seedCredentialsFromEnv();
-    expect(mockSet).not.toHaveBeenCalled();
-  });
+  it('refuses to save when encryption is not available', () => {
+    encryptionAvailable.value = false;
 
-  it('writes env credentials to store when store is empty and all env vars are set', () => {
-    mockHas.mockReturnValue(false);
-    process.env.JIRA_DOMAIN = 'test.atlassian.net';
-    process.env.JIRA_EMAIL = 'a@b.com';
-    process.env.JIRA_TOKEN = 'mytoken';
-
-    seedCredentialsFromEnv();
-
-    expect(mockSet).toHaveBeenCalledWith('credentials', {
-      domain: 'test.atlassian.net',
-      email: 'a@b.com',
-      token: 'mytoken',
-    });
-  });
-
-  it('does not write when JIRA_DOMAIN is missing', () => {
-    mockHas.mockReturnValue(false);
-    process.env.JIRA_EMAIL = 'a@b.com';
-    process.env.JIRA_TOKEN = 'mytoken';
-
-    seedCredentialsFromEnv();
-
-    expect(mockSet).not.toHaveBeenCalled();
-  });
-
-  it('does not write when JIRA_EMAIL is missing', () => {
-    mockHas.mockReturnValue(false);
-    process.env.JIRA_DOMAIN = 'test.atlassian.net';
-    process.env.JIRA_TOKEN = 'mytoken';
-
-    seedCredentialsFromEnv();
-
-    expect(mockSet).not.toHaveBeenCalled();
-  });
-
-  it('does not write when JIRA_TOKEN is missing', () => {
-    mockHas.mockReturnValue(false);
-    process.env.JIRA_DOMAIN = 'test.atlassian.net';
-    process.env.JIRA_EMAIL = 'a@b.com';
-
-    seedCredentialsFromEnv();
-
-    expect(mockSet).not.toHaveBeenCalled();
+    expect(() => saveCredentials(CREDS)).toThrow(/secure storage/i);
+    expect(data.has('credentials')).toBe(false);
   });
 });

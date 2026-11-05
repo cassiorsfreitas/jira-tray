@@ -35,7 +35,10 @@ export function App() {
         activeIndex={activeIndex}
         onOpen={(url) => window.electronAPI.openUrl(url)}
       />
-      <SyncStateFooter syncState={view.syncState} />
+      <SyncStateFooter
+        syncState={view.syncState}
+        onOpenSettings={() => window.electronAPI.openSettings()}
+      />
     </div>
   );
 }

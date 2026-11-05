@@ -47,7 +47,6 @@
     "vitest": "^5.0.5"
   },
   "dependencies": {
-    "dotenv": "^18.0.8",
     "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^8.2.0",
     "react": "^19.3.1",
