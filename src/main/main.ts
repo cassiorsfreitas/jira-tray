@@ -5,6 +5,9 @@ import { createPopupWindow, createTray, isPopupOpen } from './tray';
 import { createSettingsWindow } from './settings-window';
 import { loadCredentials, saveCredentials } from './credentials-store';
 import { loadPreferences, savePreferences } from './preferences-store';
+import { loadToggleShortcut, saveToggleShortcut } from './shortcut-store';
+import { createToggleShortcut } from './toggle-shortcut';
+import type { ShortcutResult } from '../shared/shortcut';
 import type { Preferences } from '../shared/preferences';
 import { fetchJiraTickets } from './jira-client';
 import { validateCredentialsInput } from '../shared/credentials';
@@ -24,9 +27,6 @@ if (started) {
 if (process.platform === 'darwin') {
   app.dock?.hide();
 }
-
-// Hyper key (Ctrl+Alt+Shift+Cmd) + J, e.g. Caps Lock remapped by Raycast.
-const TOGGLE_SHORTCUT = 'Control+Alt+Shift+Command+J';
 
 app.whenReady().then(() => {
   const popupWindow = createPopupWindow({
@@ -86,8 +86,20 @@ app.whenReady().then(() => {
     },
   });
 
-  if (!globalShortcut.register(TOGGLE_SHORTCUT, toggle)) {
-    console.warn(`Could not register global shortcut ${TOGGLE_SHORTCUT}`);
+  const toggleShortcut = createToggleShortcut(
+    {
+      register: (accelerator, callback) =>
+        globalShortcut.register(accelerator, callback),
+      unregister: (accelerator) => globalShortcut.unregister(accelerator),
+      load: loadToggleShortcut,
+      save: saveToggleShortcut,
+    },
+    toggle,
+  );
+  toggleShortcut.start();
+  const { accelerator, active } = toggleShortcut.state();
+  if (accelerator && !active) {
+    console.warn(`Could not register global shortcut ${accelerator}`);
   }
 
   ipcMain.on('quit', () => {
@@ -100,6 +112,25 @@ app.whenReady().then(() => {
 
   // Synchronous so the renderer can render its first frame with the saved
   // Filter Tab and Sort Order instead of flashing the defaults.
+  // Synchronous for the same reason as the preferences: the pane's first frame
+  // already shows the current shortcut.
+  ipcMain.on('get-shortcut', (event) => {
+    event.returnValue = toggleShortcut.state();
+  });
+
+  ipcMain.handle(
+    'set-shortcut',
+    (_, accelerator: string | null): ShortcutResult =>
+      toggleShortcut.set(accelerator),
+  );
+
+  // The shortcut is released while the user records a new one, so pressing the
+  // current one reaches the recorder instead of toggling the Popup.
+  ipcMain.on('shortcut-recording', (_, recording: boolean) => {
+    if (recording) toggleShortcut.suspend();
+    else toggleShortcut.resume();
+  });
+
   ipcMain.on('open-settings', () => {
     settingsWindow.open();
   });

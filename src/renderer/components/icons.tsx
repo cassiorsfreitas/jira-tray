@@ -187,3 +187,21 @@ export function ConnectionIcon({ size = 12 }: { size?: number }) {
     </svg>
   );
 }
+
+export function KeyboardIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="1.5" y="3.5" width="13" height="9" rx="2" />
+      <path d="M4.5 6.5h.01M7 6.5h.01M9.5 6.5h.01M12 6.5h.01M5 9.5h6" />
+    </svg>
+  );
+}

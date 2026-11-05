@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { Ticket } from '../shared/ticket';
 import type { Preferences } from '../shared/preferences';
+import type { ShortcutResult, ShortcutSettings } from '../shared/shortcut';
 import type {
   CredentialsInput,
   CredentialsResult,
@@ -16,6 +17,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getPreferences: (): Preferences => ipcRenderer.sendSync('get-preferences'),
   setPreferences: (changes: Partial<Preferences>) =>
     ipcRenderer.send('set-preferences', changes),
+  getShortcut: (): ShortcutSettings => ipcRenderer.sendSync('get-shortcut'),
+  setShortcut: (accelerator: string | null): Promise<ShortcutResult> =>
+    ipcRenderer.invoke('set-shortcut', accelerator),
+  setShortcutRecording: (recording: boolean) =>
+    ipcRenderer.send('shortcut-recording', recording),
   getCredentials: (): CredentialsSummary | null =>
     ipcRenderer.sendSync('get-credentials'),
   testCredentials: (input: CredentialsInput): Promise<CredentialsResult> =>

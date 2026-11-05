@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ClearIcon, ConnectionIcon } from '../components/icons';
+import { ClearIcon, ConnectionIcon, KeyboardIcon } from '../components/icons';
 import { ConnectionPane } from './ConnectionPane';
+import { KeyboardPane } from './KeyboardPane';
 
-type SectionId = 'connection';
+type SectionId = 'connection' | 'keyboard';
 
 const SECTIONS: {
   id: SectionId;
@@ -15,6 +16,12 @@ const SECTIONS: {
     label: 'Connection',
     hint: 'Jira account',
     icon: <ConnectionIcon size={14} />,
+  },
+  {
+    id: 'keyboard',
+    label: 'Keyboard',
+    hint: 'Shortcuts',
+    icon: <KeyboardIcon size={14} />,
   },
 ];
 
@@ -116,10 +123,26 @@ export function SettingsApp() {
           ))}
         </nav>
 
+        {/* Both panes stay mounted so an unsaved form survives a tab switch. */}
         <main style={{ flex: 1, minWidth: 0, display: 'flex' }}>
-          {section === 'connection' && (
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: section === 'connection' ? 'flex' : 'none',
+            }}
+          >
             <ConnectionPane initial={summary} firstRun={firstRun} />
-          )}
+          </div>
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: section === 'keyboard' ? 'flex' : 'none',
+            }}
+          >
+            <KeyboardPane />
+          </div>
         </main>
       </div>
     </div>
