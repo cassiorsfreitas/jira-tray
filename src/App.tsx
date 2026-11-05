@@ -261,8 +261,9 @@ function TicketRow({
           >
             <span
               style={{
-                width: 6,
-                height: 6,
+                width: 4,
+                height: 4,
+                marginTop: 1,
                 borderRadius: "50%",
                 backgroundColor: statusTint,
                 flexShrink: 0,
@@ -451,7 +452,7 @@ function FilterTabRow({
           }}
         >
           {label}
-          <span style={{ opacity: 0.7 }}>{count}</span>
+          {count !== null && <span style={{ opacity: 0.7 }}>{count}</span>}
         </button>
       ))}
     </div>
@@ -489,7 +490,7 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
         padding: "0 16px",
         borderTop: "1px solid var(--border)",
         fontSize: 11,
-        color: failed ? "var(--accent-red)" : "var(--text-secondary)",
+        color: "var(--text-secondary)",
       }}
     >
       {syncState && (
@@ -502,7 +503,7 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
               flexShrink: 0,
               backgroundColor: failed
                 ? "var(--accent-red)"
-                : "var(--text-secondary)",
+                : "var(--accent-green)",
             }}
           />
           <span style={{ fontWeight: 400 }}>{syncState.label}</span>
@@ -724,6 +725,7 @@ export function App() {
     };
   }, []);
 
+  const isLoading = tickets === null && error === null;
   const today = localDateString(new Date());
   const { rows, tabs, emptyReason, syncState } = buildTicketListView({
     tickets: tickets ?? [],
@@ -734,8 +736,8 @@ export function App() {
     lastSyncedAt,
     lastErrorAt,
     now,
+    loading: isLoading,
   });
-  const isLoading = tickets === null && error === null;
   // Tickets can shrink under the selection (refetch, narrower search).
   const activeIndex = Math.min(selectedIndex, Math.max(rows.length - 1, 0));
 
