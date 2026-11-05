@@ -1,4 +1,10 @@
-import { BrowserWindow, Tray, nativeImage, nativeTheme, screen } from 'electron';
+import {
+  BrowserWindow,
+  Tray,
+  nativeImage,
+  nativeTheme,
+  screen,
+} from 'electron';
 import path from 'node:path';
 import { computePopupPosition } from './popup-position';
 import { POPUP_HEIGHT, POPUP_WIDTH } from '../shared/popup-layout';
@@ -28,8 +34,14 @@ const TRAY_ICON_ALERT_DARK_2X =
 
 function buildDefaultIcon() {
   const img = nativeImage.createEmpty();
-  img.addRepresentation({ scaleFactor: 1, buffer: Buffer.from(TRAY_ICON_1X, 'base64') });
-  img.addRepresentation({ scaleFactor: 2, buffer: Buffer.from(TRAY_ICON_2X, 'base64') });
+  img.addRepresentation({
+    scaleFactor: 1,
+    buffer: Buffer.from(TRAY_ICON_1X, 'base64'),
+  });
+  img.addRepresentation({
+    scaleFactor: 2,
+    buffer: Buffer.from(TRAY_ICON_2X, 'base64'),
+  });
   img.setTemplateImage(true);
   return img;
 }
@@ -39,11 +51,23 @@ function buildAlertIcon(dark: boolean) {
   // Two variants: black strokes for light menu bar, white strokes for dark menu bar.
   const img = nativeImage.createEmpty();
   if (dark) {
-    img.addRepresentation({ scaleFactor: 1, buffer: Buffer.from(TRAY_ICON_ALERT_DARK_1X, 'base64') });
-    img.addRepresentation({ scaleFactor: 2, buffer: Buffer.from(TRAY_ICON_ALERT_DARK_2X, 'base64') });
+    img.addRepresentation({
+      scaleFactor: 1,
+      buffer: Buffer.from(TRAY_ICON_ALERT_DARK_1X, 'base64'),
+    });
+    img.addRepresentation({
+      scaleFactor: 2,
+      buffer: Buffer.from(TRAY_ICON_ALERT_DARK_2X, 'base64'),
+    });
   } else {
-    img.addRepresentation({ scaleFactor: 1, buffer: Buffer.from(TRAY_ICON_ALERT_1X, 'base64') });
-    img.addRepresentation({ scaleFactor: 2, buffer: Buffer.from(TRAY_ICON_ALERT_2X, 'base64') });
+    img.addRepresentation({
+      scaleFactor: 1,
+      buffer: Buffer.from(TRAY_ICON_ALERT_1X, 'base64'),
+    });
+    img.addRepresentation({
+      scaleFactor: 2,
+      buffer: Buffer.from(TRAY_ICON_ALERT_2X, 'base64'),
+    });
   }
   return img;
 }
@@ -69,7 +93,10 @@ function closePopup(win: BrowserWindow): void {
   win.setIgnoreMouseEvents(true);
 }
 
-function openPopup(win: BrowserWindow, position: { x: number; y: number }): void {
+function openPopup(
+  win: BrowserWindow,
+  position: { x: number; y: number },
+): void {
   openPopups.add(win);
   win.setPosition(position.x, position.y);
   win.setIgnoreMouseEvents(false);

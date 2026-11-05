@@ -7,8 +7,8 @@
 
 The original spec (issue #1) and the Jira Cloud REST API v3 documentation available at design time described `GET /rest/api/3/search?jql=…` as the search endpoint. During manual testing against a live Jira Cloud instance, both `GET /rest/api/3/search` and `POST /rest/api/3/search` returned errors:
 
-- `GET /rest/api/3/search` → `410 Gone` with message: *"The requested API has been removed. Please migrate to the /rest/api/3/search/jql API."*
-- `POST /rest/api/3/search` → `400 Bad Request` with message: *"There was an error parsing JSON."*
+- `GET /rest/api/3/search` → `410 Gone` with message: _"The requested API has been removed. Please migrate to the /rest/api/3/search/jql API."_
+- `POST /rest/api/3/search` → `400 Bad Request` with message: _"There was an error parsing JSON."_
 
 Atlassian's migration guide (CHANGE-2046) confirmed the retirement and pointed at `/rest/api/3/search/jql` as the replacement.
 
@@ -27,11 +27,11 @@ Atlassian's migration guide (CHANGE-2046) confirmed the retirement and pointed a
 ## Response shape differences from the retired endpoint
 
 | Old `/rest/api/3/search` | New `/rest/api/3/search/jql` |
-|--------------------------|------------------------------|
-| `total: number`          | *(absent)*                   |
-| `startAt: number`        | *(absent)*                   |
-| *(absent)*               | `isLast: boolean`            |
-| *(absent)*               | `nextPageToken?: string`     |
+| ------------------------ | ---------------------------- |
+| `total: number`          | _(absent)_                   |
+| `startAt: number`        | _(absent)_                   |
+| _(absent)_               | `isLast: boolean`            |
+| _(absent)_               | `nextPageToken?: string`     |
 
 The `issues[]` field structure is unchanged.
 

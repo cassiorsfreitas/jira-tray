@@ -583,7 +583,12 @@ describe('buildTicketListView Filter Tabs while loading', () => {
           count: null,
           selected: selected === 'inprogress',
         },
-        { tab: 'todo', label: 'To do', count: null, selected: selected === 'todo' },
+        {
+          tab: 'todo',
+          label: 'To do',
+          count: null,
+          selected: selected === 'todo',
+        },
       ]);
     }
   });
