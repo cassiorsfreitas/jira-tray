@@ -52,7 +52,7 @@ receive callbacks as props and only `App.tsx` and the hook touch
 ```bash
 npm start        # launch in dev mode (hot-reload)
 npm run package  # build a local app bundle
-npm run make     # build distributable (dmg / zip)
+npm run make     # build a distributable zip
 ```
 
 ---
@@ -63,4 +63,4 @@ npm run make     # build distributable (dmg / zip)
 npm run make
 ```
 
-Output is in `out/make/`.
+The zip lands in `out/make/zip/darwin/<arch>/`. Jira Tray is macOS only: there are no Windows or Linux builds.
