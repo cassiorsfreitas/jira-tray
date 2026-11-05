@@ -88,7 +88,8 @@ Tests run with `npm test` and live next to the code (`foo.ts` and `foo.test.ts`)
 
 - Branch from `main`, one concern per branch.
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`. Write the subject in the imperative and keep it short; use the body to say **why**.
-- In the pull request, say what changed and why, how you checked it, and what could break. Link the issue it closes.
+- The pull request template asks for what changed and why, how you checked it, and what could break. Link the issue it closes.
+- CI runs `lint`, `typecheck` and `test`, and packages the app to check its signature, on every pull request. They need to pass before it is merged.
 
 ## License
 

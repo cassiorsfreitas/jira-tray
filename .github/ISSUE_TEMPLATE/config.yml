@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Troubleshooting
+    url: https://github.com/cassiorsfreitas/jira-tray#troubleshooting
+    about: The fixes for the most common problems, such as the orange dot or a shortcut that does nothing.
