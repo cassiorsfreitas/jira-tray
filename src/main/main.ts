@@ -2,6 +2,7 @@ import { app, globalShortcut, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import { createPopupWindow, createTray, isPopupOpen } from './tray';
 import { createSettingsWindow } from './settings-window';
+import { isOpenableUrl } from './external-url';
 import { loadCredentials, saveCredentials } from './credentials-store';
 import { loadPreferences, savePreferences } from './preferences-store';
 import { loadToggleShortcut, saveToggleShortcut } from './shortcut-store';
@@ -199,8 +200,9 @@ app.whenReady().then(() => {
     },
   );
 
-  ipcMain.on('open-url', (_, url: string) => {
-    shell.openExternal(url);
+  ipcMain.on('open-url', (_, url: unknown) => {
+    // The window is not trusted to pick what the system opens.
+    if (isOpenableUrl(url)) void shell.openExternal(url);
   });
 });
 
