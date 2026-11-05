@@ -1,7 +1,7 @@
 import { BrowserWindow, Tray, nativeImage, nativeTheme, screen } from 'electron';
 import path from 'node:path';
 import { computePopupPosition } from './popup-position';
-import { POPUP_HEIGHT, POPUP_WIDTH } from './popup-layout';
+import { POPUP_HEIGHT, POPUP_WIDTH } from '../shared/popup-layout';
 
 // Ticket-card icon — black on transparent, used as a macOS template image so
 // the OS automatically renders it correctly in both light and dark menu bars.

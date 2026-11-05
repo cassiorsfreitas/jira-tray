@@ -1,4 +1,4 @@
-import type { Ticket } from './jira-client';
+import type { Ticket } from './ticket';
 import { STATUS_CATEGORIES, statusCategoryLabel } from './status';
 import type { StatusCategory } from './status';
 import { groupTickets } from './ticket-grouping';

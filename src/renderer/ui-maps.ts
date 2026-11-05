@@ -1,4 +1,4 @@
-import type { BadgeTone, TicketGroup } from './ticket-list-view';
+import type { BadgeTone, TicketGroup } from '../shared/ticket-list-view';
 
 const GROUP_ACCENT_COLORS: Record<TicketGroup, string> = {
   overdue: 'var(--accent-red)',

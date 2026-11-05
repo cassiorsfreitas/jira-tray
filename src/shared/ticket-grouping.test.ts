@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { groupTickets, localDateString } from './ticket-grouping';
-import type { Ticket } from './jira-client';
+import type { Ticket } from './ticket';
 
 const base: Omit<Ticket, 'dueDate'> = {
   key: 'PROJ-1',

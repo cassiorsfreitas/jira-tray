@@ -3,14 +3,9 @@ import {
   DEFAULT_SORT_ORDER,
   FILTER_TABS,
   SORT_ORDER_OPTIONS,
-} from './ticket-list-view';
-import type { FilterTab, SortOrder } from './ticket-list-view';
-
-/** The user choices that persist across Popup openings and app restarts. The search text is deliberately absent. */
-export interface Preferences {
-  filterTab: FilterTab;
-  sortOrder: SortOrder;
-}
+} from '../shared/ticket-list-view';
+import type { FilterTab, SortOrder } from '../shared/ticket-list-view';
+import type { Preferences } from '../shared/preferences';
 
 interface StoreSchema {
   preferences?: unknown;

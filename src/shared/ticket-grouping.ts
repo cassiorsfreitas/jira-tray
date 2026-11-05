@@ -1,4 +1,4 @@
-import type { Ticket } from './jira-client';
+import type { Ticket } from './ticket';
 
 export interface GroupedTickets {
   overdue: Ticket[];

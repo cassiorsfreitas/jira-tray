@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createPopupSession, update } from './popup-session';
 import type { KeyInput, PopupEvent, PopupSession } from './popup-session';
-import type { Ticket } from './jira-client';
+import type { Ticket } from '../shared/ticket';
 
 // Local noon, so the local calendar day is 2026-10-26 in any time zone.
 const NOW = new Date(2026, 9, 26, 12, 0, 0).getTime();

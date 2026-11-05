@@ -38,6 +38,33 @@ The main process loads this file via `dotenv` in development mode only. If the f
 
 ---
 
+## Project structure
+
+`src/` is split by Electron process. Each folder has an entry point named after
+itself (`main/main.ts`, `preload/preload.ts`, `renderer/renderer.ts`); the Forge
+build output (`main.cjs`, `preload.cjs`) depends on those names. Tests sit next
+to the module they cover.
+
+```
+src/
+├── main/        Main process: tray, popup window, Jira client, stores
+├── preload/     contextBridge — the only door between main and renderer
+├── renderer/    The Popup UI (React)
+│   ├── App.tsx          composes the components below, nothing else
+│   ├── components/      one presentational component per file, no electronAPI calls
+│   ├── hooks/           use-popup-session: wires IPC, keyboard and clock to the session
+│   ├── popup-session.ts the Popup session state machine (pure, unit-tested)
+│   └── ui-maps.ts       domain value → CSS colour
+├── shared/      Pure domain logic and types used by more than one process
+└── assets/      Tray icon sources
+```
+
+Rules of thumb: `shared/` never imports from `main/` or `renderer/`; components
+receive callbacks as props and only `App.tsx` and the hook touch
+`window.electronAPI`.
+
+---
+
 ## Dev workflow
 
 ```bash

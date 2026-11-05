@@ -1,8 +1,12 @@
-import type { Ticket } from './jira-client';
-import type { Preferences } from './preferences-store';
-import { localDateString } from './ticket-grouping';
-import { buildTicketListView } from './ticket-list-view';
-import type { FilterTab, SortOrder, TicketListView } from './ticket-list-view';
+import type { Ticket } from '../shared/ticket';
+import type { Preferences } from '../shared/preferences';
+import { localDateString } from '../shared/ticket-grouping';
+import { buildTicketListView } from '../shared/ticket-list-view';
+import type {
+  FilterTab,
+  SortOrder,
+  TicketListView,
+} from '../shared/ticket-list-view';
 
 // ── Interface ──────────────────────────────────────────────────────────────
 

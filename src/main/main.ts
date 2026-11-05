@@ -5,9 +5,9 @@ import started from 'electron-squirrel-startup';
 import { createPopupWindow, createTray, isPopupOpen } from './tray';
 import { loadCredentials, seedCredentialsFromEnv } from './credentials-store';
 import { loadPreferences, savePreferences } from './preferences-store';
-import type { Preferences } from './preferences-store';
+import type { Preferences } from '../shared/preferences';
 import { fetchJiraTickets } from './jira-client';
-import { groupTickets, localDateString } from './ticket-grouping';
+import { groupTickets, localDateString } from '../shared/ticket-grouping';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {

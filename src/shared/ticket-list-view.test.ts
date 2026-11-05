@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildTicketListView, SORT_ORDER_OPTIONS } from './ticket-list-view';
 import type { FilterTab } from './ticket-list-view';
-import type { Ticket } from './jira-client';
+import type { Ticket } from './ticket';
 
 const base: Omit<Ticket, 'key' | 'dueDate'> = {
   title: 'Example ticket',

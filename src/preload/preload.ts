@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { Ticket } from './jira-client';
-import type { Preferences } from './preferences-store';
+import type { Ticket } from '../shared/ticket';
+import type { Preferences } from '../shared/preferences';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   quit: () => ipcRenderer.send('quit'),
