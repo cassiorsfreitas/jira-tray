@@ -571,6 +571,43 @@ describe('buildTicketListView Filter Tab counts and visibility', () => {
   });
 });
 
+describe('buildTicketListView Filter Tabs while loading', () => {
+  function loadingTabs(filterTab: FilterTab) {
+    return buildTicketListView({
+      tickets: [],
+      today: TODAY,
+      filterTab,
+      loading: true,
+    }).tabs;
+  }
+
+  it('shows every tab, without counts, whichever tab is selected', () => {
+    for (const selected of ['all', 'inprogress', 'todo'] as const) {
+      expect(loadingTabs(selected)).toEqual([
+        { tab: 'all', label: 'All', count: null, selected: selected === 'all' },
+        {
+          tab: 'inprogress',
+          label: 'In progress',
+          count: null,
+          selected: selected === 'inprogress',
+        },
+        { tab: 'todo', label: 'To do', count: null, selected: selected === 'todo' },
+      ]);
+    }
+  });
+
+  it('hides zero-count tabs again once loading is over', () => {
+    const { tabs } = buildTicketListView({
+      tickets: [],
+      today: TODAY,
+      filterTab: 'todo',
+      loading: false,
+    });
+
+    expect(tabs.map((t) => t.tab)).toEqual(['all', 'todo']);
+  });
+});
+
 describe('buildTicketListView empty reason with Filter Tabs', () => {
   const inProgress: Ticket = {
     ...ticket('IP-1', null),

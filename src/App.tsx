@@ -451,7 +451,7 @@ function FilterTabRow({
           }}
         >
           {label}
-          <span style={{ opacity: 0.7 }}>{count}</span>
+          {count !== null && <span style={{ opacity: 0.7 }}>{count}</span>}
         </button>
       ))}
     </div>
@@ -724,6 +724,7 @@ export function App() {
     };
   }, []);
 
+  const isLoading = tickets === null && error === null;
   const today = localDateString(new Date());
   const { rows, tabs, emptyReason, syncState } = buildTicketListView({
     tickets: tickets ?? [],
@@ -734,8 +735,8 @@ export function App() {
     lastSyncedAt,
     lastErrorAt,
     now,
+    loading: isLoading,
   });
-  const isLoading = tickets === null && error === null;
   // Tickets can shrink under the selection (refetch, narrower search).
   const activeIndex = Math.min(selectedIndex, Math.max(rows.length - 1, 0));
 

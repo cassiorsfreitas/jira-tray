@@ -50,6 +50,8 @@ export interface TicketListViewInput {
   lastErrorAt?: number | null;
   /** Current time in epoch milliseconds, used to age the Sync State. */
   now?: number;
+  /** True while Tickets are being fetched and `tickets` is not yet known. */
+  loading?: boolean;
 }
 
 export interface SyncState {
@@ -61,8 +63,11 @@ export interface FilterTabView {
   tab: FilterTab;
   /** UI copy for the tab, e.g. "In progress". */
   label: string;
-  /** How many Tickets the tab would show if selected, given the search text. */
-  count: number;
+  /**
+   * How many Tickets the tab would show if selected, given the search text.
+   * Null while loading, when the count is not yet known.
+   */
+  count: number | null;
   selected: boolean;
 }
 
@@ -159,9 +164,22 @@ const FILTER_TAB_LABELS: Record<FilterTab, string> = {
 /**
  * Counts come from the searched Tickets, before the selected tab filters them,
  * so each answers "how many would I see if I selected this tab". "All" and the
- * selected tab are always shown; the rest only when they have Tickets.
+ * selected tab are always shown; the rest only when they have Tickets. While
+ * loading no count is known, so every tab is shown and none has a count.
  */
-function buildTabs(searched: Ticket[], selected: FilterTab): FilterTabView[] {
+function buildTabs(
+  searched: Ticket[],
+  selected: FilterTab,
+  loading: boolean,
+): FilterTabView[] {
+  if (loading) {
+    return FILTER_TABS.map((tab) => ({
+      tab,
+      label: FILTER_TAB_LABELS[tab],
+      count: null,
+      selected: tab === selected,
+    }));
+  }
   return FILTER_TABS.map((tab) => ({
     tab,
     label: FILTER_TAB_LABELS[tab],
@@ -229,6 +247,7 @@ export function buildTicketListView({
   lastSyncedAt,
   lastErrorAt,
   now,
+  loading = false,
 }: TicketListViewInput): TicketListView {
   const query = (searchText ?? '').trim().toLowerCase();
   const searched = query
@@ -255,7 +274,7 @@ export function buildTicketListView({
 
   return {
     rows,
-    tabs: buildTabs(searched, filterTab),
+    tabs: buildTabs(searched, filterTab, loading),
     emptyReason: emptyReasonFor(tickets, searched, rows, filterTab),
     syncState: computeSyncState({ lastSyncedAt, lastErrorAt, now }),
   };
