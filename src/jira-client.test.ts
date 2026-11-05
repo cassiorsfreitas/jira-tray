@@ -144,21 +144,21 @@ describe('dueDate handling', () => {
 
 // --- Slice 5: statusCategory derivation ---
 describe('statusCategory derivation', () => {
-  const cases: [string, string][] = [
-    ['new', 'todo'],
-    ['indeterminate', 'inprogress'],
-    ['done', 'done'],
-    ['in_review', 'inreview'],
+  // By Status name, not by Jira's own Status Category: two Jira Statuses can
+  // share the name "To Do", and one of them can sit in the "indeterminate"
+  // category.
+  const cases: [string, string, string][] = [
+    ['To Do', 'new', 'todo'],
+    ['To Do', 'indeterminate', 'todo'],
+    ['In Progress', 'indeterminate', 'inprogress'],
+    ['In Progress', 'new', 'inprogress'],
+    [' to do ', 'indeterminate', 'todo'],
   ];
 
-  for (const [categoryKey, expected] of cases) {
-    it(`maps category key "${categoryKey}" → "${expected}"`, async () => {
+  for (const [name, categoryKey, expected] of cases) {
+    it(`maps Status "${name}" (Jira category "${categoryKey}") → "${expected}"`, async () => {
       mockFetch(200, {
-        issues: [
-          makeIssue({
-            status: { name: 'To Do', statusCategory: { key: categoryKey } },
-          }),
-        ],
+        issues: [makeIssue({ status: { name, statusCategory: { key: categoryKey } } })],
         isLast: true,
       });
 

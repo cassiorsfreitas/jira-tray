@@ -22,22 +22,18 @@ export interface JiraCredentials {
 
 const JQL = 'assignee = currentUser() AND statusCategory != Done ORDER BY due ASC';
 
-// The only Statuses we show. Matched by name here rather than in the JQL: Jira
-// can have several Statuses with the same name (e.g. a "To Do" in the
-// "indeterminate" category on one project), and a JQL name match only picks one.
-const SHOWN_STATUSES = new Set(['to do', 'in progress']);
+// The only Statuses we show, and the Status Category each one gets. Matched by
+// name here rather than in the JQL, and categorised by name rather than by
+// Jira's own category: Jira can have several Statuses with the same name (e.g.
+// a "To Do" in the "indeterminate" category on one project), and a JQL name
+// match only picks one.
+const SHOWN_STATUSES = new Map<string, StatusCategory>([
+  ['to do', 'todo'],
+  ['in progress', 'inprogress'],
+]);
 
-function mapStatusCategory(key: string): StatusCategory {
-  switch (key) {
-    case 'new':
-      return 'todo';
-    case 'indeterminate':
-      return 'inprogress';
-    case 'done':
-      return 'done';
-    default:
-      return 'inreview';
-  }
+function shownStatusCategory(statusName: string): StatusCategory | undefined {
+  return SHOWN_STATUSES.get(statusName.trim().toLowerCase());
 }
 
 function mapPriority(name: string): Priority {
@@ -61,7 +57,6 @@ interface JiraIssue {
     summary: string;
     status: {
       name: string;
-      statusCategory: { key: string };
     };
     priority: { name: string };
     duedate?: string | null;
@@ -87,17 +82,19 @@ export async function fetchJiraTickets({ domain, email, token }: JiraCredentials
 
   const data = (await response.json()) as { issues: JiraIssue[]; isLast: boolean; nextPageToken?: string };
 
-  return data.issues
-    .filter((issue) => SHOWN_STATUSES.has(issue.fields.status.name.trim().toLowerCase()))
-    .map((issue) => ({
+  return data.issues.flatMap((issue) => {
+    const statusCategory = shownStatusCategory(issue.fields.status.name);
+    if (!statusCategory) return [];
+    return {
       key: issue.key,
       title: issue.fields.summary,
       status: issue.fields.status.name,
-      statusCategory: mapStatusCategory(issue.fields.status.statusCategory.key),
+      statusCategory,
       priority: mapPriority(issue.fields.priority.name),
       dueDate: issue.fields.duedate ?? null,
       created: issue.fields.created,
       url: `https://${domain}/browse/${issue.key}`,
       board: issue.fields.project.name,
-    }));
+    };
+  });
 }
