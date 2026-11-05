@@ -22,7 +22,8 @@ import {
   SORT_ROW_HEIGHT,
   TABS_HEIGHT,
 } from "./popup-layout";
-import { badgeToneColor, groupAccentColor, statusColor } from "./ui-maps";
+import { statusColor } from "./status";
+import { badgeToneColor, groupAccentColor } from "./ui-maps";
 
 // ── Icons ───────────────────────────────────────────────────────────────────
 
@@ -160,7 +161,7 @@ function TicketRow({
   selected: boolean;
 }) {
   const { ticket, group, badge } = row;
-  const statusTint = statusColor(ticket.status, ticket.statusCategory);
+  const statusTint = statusColor(ticket.statusCategory);
 
   return (
     <button
@@ -488,6 +489,7 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
         height: FOOTER_HEIGHT,
         boxSizing: "border-box",
         padding: "0 16px",
+        marginLeft: "2px",
         borderTop: "1px solid var(--border)",
         fontSize: 11,
         color: "var(--text-secondary)",

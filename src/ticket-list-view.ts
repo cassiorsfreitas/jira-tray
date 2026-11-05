@@ -1,4 +1,6 @@
 import type { Ticket } from './jira-client';
+import { STATUS_CATEGORIES, statusCategoryLabel } from './status';
+import type { StatusCategory } from './status';
 import { groupTickets } from './ticket-grouping';
 import type { GroupedTickets } from './ticket-grouping';
 
@@ -19,10 +21,10 @@ export interface TicketRow {
   badge: DueDateBadge | null;
 }
 
-/** Filter Tabs in display order. */
-export const FILTER_TABS = ['all', 'inprogress', 'todo'] as const;
+/** Filter Tabs in display order: "all", then one per Status Category. */
+export const FILTER_TABS: readonly FilterTab[] = ['all', ...STATUS_CATEGORIES];
 
-export type FilterTab = (typeof FILTER_TABS)[number];
+export type FilterTab = 'all' | StatusCategory;
 
 export type SortOrder = 'dueDate' | 'newest';
 
@@ -150,16 +152,13 @@ function byNewestFirst(a: Ticket, b: Ticket): number {
 
 // ── Filter Tabs ────────────────────────────────────────────────────────────
 
-/** Tickets with the `inreview` Status Category belong to "all" only. */
 function inFilterTab(ticket: Ticket, tab: FilterTab): boolean {
   return tab === 'all' || ticket.statusCategory === tab;
 }
 
-const FILTER_TAB_LABELS: Record<FilterTab, string> = {
-  all: 'All',
-  inprogress: 'In progress',
-  todo: 'To do',
-};
+function filterTabLabel(tab: FilterTab): string {
+  return tab === 'all' ? 'All' : statusCategoryLabel(tab);
+}
 
 /**
  * Counts come from the searched Tickets, before the selected tab filters them,
@@ -175,14 +174,14 @@ function buildTabs(
   if (loading) {
     return FILTER_TABS.map((tab) => ({
       tab,
-      label: FILTER_TAB_LABELS[tab],
+      label: filterTabLabel(tab),
       count: null,
       selected: tab === selected,
     }));
   }
   return FILTER_TABS.map((tab) => ({
     tab,
-    label: FILTER_TAB_LABELS[tab],
+    label: filterTabLabel(tab),
     count: searched.filter((ticket) => inFilterTab(ticket, tab)).length,
     selected: tab === selected,
   })).filter(

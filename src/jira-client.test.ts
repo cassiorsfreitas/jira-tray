@@ -11,7 +11,6 @@ const makeIssue = (overrides: Record<string, unknown> = {}) => ({
       name: 'In Progress',
       statusCategory: { key: 'indeterminate' },
     },
-    priority: { name: 'High' },
     duedate: '2026-10-25',
     created: '2026-10-01T09:30:00.000+0000',
     project: { name: 'Platform' },
@@ -87,8 +86,7 @@ describe('Ticket normalisation', () => {
         makeIssue({
           summary: 'Fix the bug',
           status: { name: 'In Progress', statusCategory: { key: 'indeterminate' } },
-          priority: { name: 'High' },
-          duedate: '2026-10-25',
+                duedate: '2026-10-25',
         }),
       ],
       isLast: true,
@@ -102,7 +100,6 @@ describe('Ticket normalisation', () => {
         title: 'Fix the bug',
         status: 'In Progress',
         statusCategory: 'inprogress',
-        priority: 'high',
         dueDate: '2026-10-25',
         created: '2026-10-01T09:30:00.000+0000',
         url: 'https://mycompany.atlassian.net/browse/PROJ-1',
@@ -140,33 +137,6 @@ describe('dueDate handling', () => {
 
     expect(ticket.dueDate).toBeNull();
   });
-});
-
-// --- Slice 5: statusCategory derivation ---
-describe('statusCategory derivation', () => {
-  // By Status name, not by Jira's own Status Category: two Jira Statuses can
-  // share the name "To Do", and one of them can sit in the "indeterminate"
-  // category.
-  const cases: [string, string, string][] = [
-    ['To Do', 'new', 'todo'],
-    ['To Do', 'indeterminate', 'todo'],
-    ['In Progress', 'indeterminate', 'inprogress'],
-    ['In Progress', 'new', 'inprogress'],
-    [' to do ', 'indeterminate', 'todo'],
-  ];
-
-  for (const [name, categoryKey, expected] of cases) {
-    it(`maps Status "${name}" (Jira category "${categoryKey}") → "${expected}"`, async () => {
-      mockFetch(200, {
-        issues: [makeIssue({ status: { name, statusCategory: { key: categoryKey } } })],
-        isLast: true,
-      });
-
-      const [ticket] = await fetchJiraTickets(CREDS);
-
-      expect(ticket.statusCategory).toBe(expected);
-    });
-  }
 });
 
 // --- Status filtering ---

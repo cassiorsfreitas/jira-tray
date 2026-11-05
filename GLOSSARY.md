@@ -19,7 +19,7 @@ The human-readable workflow state of a ticket as configured in Jira (e.g., "In P
 _Avoid_: State, stage, workflow step
 
 **Status Category**:
-A normalized four-value bucket that groups raw Jira statuses for display purposes: `todo`, `inprogress`, `inreview`, `done`. Derived from Jira's `statusCategory` field, not from the status name itself. `inreview` is the catch-all for any Jira category that is not new, in progress, or done; it does not mean a ticket is literally in review.
+A normalized two-value bucket for the Statuses the app shows: `todo` and `inprogress`. Derived from the Status name ("To Do", "In Progress"), not from Jira's own `statusCategory` field, because Jira can have several Statuses with the same name in different categories. Tickets in any other Status are not shown.
 _Avoid_: Status type, status group
 
 **Due Date**:
@@ -67,7 +67,7 @@ The Tray icon variant that renders an orange dot, shown when the user has overdu
 _Avoid_: Badge, notification dot, indicator
 
 **Filter Tab**:
-One of the tabs above the ticket list that narrows it by Status Category: "All", "In progress", "To do". Tickets with the `inreview` Status Category appear only under "All". The selected Filter Tab persists across Popup openings and app restarts.
+One of the tabs above the ticket list that narrows it by Status Category: "All", "In progress", "To do". The selected Filter Tab persists across Popup openings and app restarts.
 _Avoid_: Tab, filter, view
 
 **Sort Order**:

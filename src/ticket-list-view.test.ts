@@ -7,7 +7,6 @@ const base: Omit<Ticket, 'key' | 'dueDate'> = {
   title: 'Example ticket',
   status: 'In Progress',
   statusCategory: 'inprogress',
-  priority: 'medium',
   url: 'https://example.atlassian.net/browse/PROJ-1',
   board: 'Example Project',
   created: '2026-10-01T09:30:00.000+0000',
@@ -431,7 +430,6 @@ describe('buildTicketListView Filter Tabs', () => {
     { ...ticket('IP-1', null), statusCategory: 'inprogress' },
     { ...ticket('IP-2', null), statusCategory: 'inprogress' },
     { ...ticket('TD-1', null), statusCategory: 'todo' },
-    { ...ticket('IR-1', null), statusCategory: 'inreview' },
   ];
 
   function tabKeys(
@@ -447,12 +445,12 @@ describe('buildTicketListView Filter Tabs', () => {
     }).rows.map((row) => row.ticket.key);
   }
 
-  it('lists every Ticket under "All", including inreview', () => {
-    expect(tabKeys('all')).toEqual(['IP-1', 'IP-2', 'TD-1', 'IR-1']);
+  it('lists every Ticket under "All"', () => {
+    expect(tabKeys('all')).toEqual(['IP-1', 'IP-2', 'TD-1']);
   });
 
   it('defaults to "All" when no Filter Tab is given', () => {
-    expect(tabKeys(undefined)).toEqual(['IP-1', 'IP-2', 'TD-1', 'IR-1']);
+    expect(tabKeys(undefined)).toEqual(['IP-1', 'IP-2', 'TD-1']);
   });
 
   it('lists only inprogress Tickets under "In progress"', () => {
@@ -461,11 +459,6 @@ describe('buildTicketListView Filter Tabs', () => {
 
   it('lists only todo Tickets under "To do"', () => {
     expect(tabKeys('todo')).toEqual(['TD-1']);
-  });
-
-  it('keeps inreview Tickets out of both status tabs', () => {
-    expect(tabKeys('inprogress')).not.toContain('IR-1');
-    expect(tabKeys('todo')).not.toContain('IR-1');
   });
 });
 
@@ -478,7 +471,6 @@ describe('buildTicketListView Filter Tab counts and visibility', () => {
       statusCategory: 'inprogress',
     },
     { ...ticket('TD-1', null), title: 'Fix signup', statusCategory: 'todo' },
-    { ...ticket('IR-1', null), statusCategory: 'inreview' },
   ];
 
   function tabs(
@@ -494,9 +486,9 @@ describe('buildTicketListView Filter Tab counts and visibility', () => {
     }).tabs;
   }
 
-  it('counts each Filter Tab, with inreview Tickets only in "All"', () => {
+  it('counts each Filter Tab', () => {
     expect(tabs('all')).toEqual([
-      { tab: 'all', label: 'All', count: 4, selected: true },
+      { tab: 'all', label: 'All', count: 3, selected: true },
       { tab: 'inprogress', label: 'In progress', count: 2, selected: false },
       { tab: 'todo', label: 'To do', count: 1, selected: false },
     ]);
@@ -505,7 +497,7 @@ describe('buildTicketListView Filter Tab counts and visibility', () => {
   it('keeps the counts of other tabs when a tab is selected', () => {
     const counts = tabs('todo').map((t) => [t.tab, t.count]);
     expect(counts).toEqual([
-      ['all', 4],
+      ['all', 3],
       ['inprogress', 2],
       ['todo', 1],
     ]);
@@ -614,10 +606,6 @@ describe('buildTicketListView empty reason with Filter Tabs', () => {
     title: 'Fix login',
     statusCategory: 'inprogress',
   };
-  const review: Ticket = {
-    ...ticket('IR-1', null),
-    statusCategory: 'inreview',
-  };
 
   function emptyReason(
     filterTab: FilterTab,
@@ -632,13 +620,6 @@ describe('buildTicketListView empty reason with Filter Tabs', () => {
     expect(emptyReason('todo', [inProgress])).toEqual({
       kind: 'noTicketsInTab',
       tab: 'todo',
-    });
-  });
-
-  it('reports the selected tab for "In progress" when only inreview Tickets exist', () => {
-    expect(emptyReason('inprogress', [review])).toEqual({
-      kind: 'noTicketsInTab',
-      tab: 'inprogress',
     });
   });
 
