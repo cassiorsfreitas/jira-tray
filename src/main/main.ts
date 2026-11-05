@@ -1,6 +1,5 @@
 import { app, globalShortcut, ipcMain, shell } from 'electron';
 import path from 'node:path';
-import started from 'electron-squirrel-startup';
 import { createPopupWindow, createTray, isPopupOpen } from './tray';
 import { createSettingsWindow } from './settings-window';
 import { loadCredentials, saveCredentials } from './credentials-store';
@@ -18,11 +17,6 @@ import type {
   CredentialsSummary,
 } from '../shared/credentials';
 import { groupTickets, localDateString } from '../shared/ticket-grouping';
-
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (started) {
-  app.quit();
-}
 
 // Hide the Dock tile on macOS — this app lives entirely in the menu bar.
 if (process.platform === 'darwin') {
