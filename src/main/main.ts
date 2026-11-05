@@ -80,7 +80,7 @@ app.whenReady().then(() => {
     }
   });
 
-  const { updateBadge, toggle } = createTray(popupWindow, {
+  const { updateBadge, toggle, close } = createTray(popupWindow, {
     onShow: () => {
       void doFetch();
     },
@@ -92,6 +92,10 @@ app.whenReady().then(() => {
 
   ipcMain.on('quit', () => {
     app.quit();
+  });
+
+  ipcMain.on('close-popup', () => {
+    close();
   });
 
   ipcMain.on('refresh', () => {

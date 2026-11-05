@@ -12,6 +12,9 @@ function runEffect(effect: PopupEffect, searchInput: HTMLInputElement | null) {
     case 'requestRefresh':
       window.electronAPI.refresh();
       break;
+    case 'closePopup':
+      window.electronAPI.closePopup();
+      break;
     case 'openSettings':
       window.electronAPI.openSettings();
       break;

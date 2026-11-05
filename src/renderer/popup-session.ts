@@ -39,6 +39,8 @@ export type PopupEvent =
 export type PopupEffect =
   | { type: 'openUrl'; url: string }
   | { type: 'requestRefresh' }
+  /** Esc: close the Popup, like clicking the Tray icon again. */
+  | { type: 'closePopup' }
   /** ⌘,: the Settings window is separate from the Popup. */
   | { type: 'openSettings' }
   /** Focus the search field and select its text. */
@@ -239,6 +241,10 @@ function cycleIndex(index: number, delta: number, count: number): number {
 function pressKey(session: PopupSession, key: KeyInput): Step {
   const core = session[CORE];
   const { rows, tabs } = session.view;
+
+  if (key.key === 'Escape') {
+    return step(core, [{ type: 'closePopup' }], true);
+  }
 
   if (key.meta && key.key === ',') {
     return step(core, [{ type: 'openSettings' }], true);
