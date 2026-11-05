@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { app, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
-import { createPopupWindow, createTray } from './tray';
+import { createPopupWindow, createTray, isPopupOpen } from './tray';
 import { loadCredentials, seedCredentialsFromEnv } from './credentials-store';
 import { loadPreferences, savePreferences } from './preferences-store';
 import type { Preferences } from './preferences-store';
@@ -60,7 +60,7 @@ app.whenReady().then(() => {
 
   // Re-fetch after a renderer reload (e.g. Cmd+R) when the window is already visible.
   popupWindow.webContents.on('did-finish-load', () => {
-    if (popupWindow.isVisible()) {
+    if (isPopupOpen(popupWindow)) {
       void doFetch();
     }
   });

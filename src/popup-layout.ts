@@ -14,6 +14,8 @@ export const SEARCH_HEIGHT = 48;
 export const TABS_HEIGHT = 34;
 /** The divider under the search field and Filter Tabs. */
 export const CONTROLS_DIVIDER_HEIGHT = 1;
+/** Space between the Filter Tabs and the divider below them. */
+export const CONTROLS_PADDING_BOTTOM = 4;
 export const SORT_ROW_HEIGHT = 28;
 export const FOOTER_HEIGHT = 28;
 /** The 1px border around the popup container, on each side. */
@@ -27,6 +29,7 @@ export const POPUP_HEIGHT =
   SEARCH_HEIGHT +
   TABS_HEIGHT +
   CONTROLS_DIVIDER_HEIGHT +
+  CONTROLS_PADDING_BOTTOM +
   SORT_ROW_HEIGHT +
   LIST_HEIGHT +
   FOOTER_HEIGHT;
