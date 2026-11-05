@@ -41,6 +41,8 @@ export type PopupEffect =
   | { type: 'requestRefresh' }
   /** Esc: close the Popup, like clicking the Tray icon again. */
   | { type: 'closePopup' }
+  /** ⌘,: the Settings window is separate from the Popup. */
+  | { type: 'openSettings' }
   /** Focus the search field and select its text. */
   | { type: 'focusSearch' }
   | { type: 'persistPreferences'; changes: Partial<Preferences> }
@@ -242,6 +244,10 @@ function pressKey(session: PopupSession, key: KeyInput): Step {
 
   if (key.key === 'Escape') {
     return step(core, [{ type: 'closePopup' }], true);
+  }
+
+  if (key.meta && key.key === ',') {
+    return step(core, [{ type: 'openSettings' }], true);
   }
 
   if (key.meta && key.key === 'r') {

@@ -515,3 +515,23 @@ describe('closing the Popup with Esc', () => {
     expect(after.activeIndex).toBe(before.activeIndex);
   });
 });
+
+describe('opening Settings with ⌘,', () => {
+  const cmdComma = key({ meta: true, key: ',', code: 'Comma' });
+
+  it('asks the caller to open the Settings window and handles the key', () => {
+    const session = loaded();
+    const result = update(session, cmdComma);
+    expect(result.session).toBe(session);
+    expect(result.effects).toEqual([{ type: 'openSettings' }]);
+    expect(result.handled).toBe(true);
+  });
+
+  it('works while the search field has focus', () => {
+    const result = update(
+      loaded(),
+      key({ meta: true, key: ',', focus: 'search' }),
+    );
+    expect(result.effects).toEqual([{ type: 'openSettings' }]);
+  });
+});

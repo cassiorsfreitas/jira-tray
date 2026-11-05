@@ -15,6 +15,9 @@ function runEffect(effect: PopupEffect, searchInput: HTMLInputElement | null) {
     case 'closePopup':
       window.electronAPI.closePopup();
       break;
+    case 'openSettings':
+      window.electronAPI.openSettings();
+      break;
     case 'focusSearch':
       searchInput?.focus();
       searchInput?.select();

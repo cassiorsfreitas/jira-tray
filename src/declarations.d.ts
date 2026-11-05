@@ -11,10 +11,21 @@ interface Window {
     refresh: () => void;
     closePopup: () => void;
     openUrl: (url: string) => void;
+    openSettings: () => void;
+    closeSettings: () => void;
     getPreferences: () => import('./shared/preferences').Preferences;
     setPreferences: (
       changes: Partial<import('./shared/preferences').Preferences>,
     ) => void;
+    getCredentials: () =>
+      | import('./shared/credentials').CredentialsSummary
+      | null;
+    testCredentials: (
+      input: import('./shared/credentials').CredentialsInput,
+    ) => Promise<import('./shared/credentials').CredentialsResult>;
+    saveCredentials: (
+      input: import('./shared/credentials').CredentialsInput,
+    ) => Promise<import('./shared/credentials').CredentialsResult>;
     onTickets: (
       callback: (tickets: import('./shared/ticket').Ticket[]) => void,
     ) => void;
