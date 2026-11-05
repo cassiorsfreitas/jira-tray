@@ -490,7 +490,7 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
         padding: "0 16px",
         borderTop: "1px solid var(--border)",
         fontSize: 11,
-        color: failed ? "var(--accent-red)" : "var(--text-secondary)",
+        color: "var(--text-secondary)",
       }}
     >
       {syncState && (
@@ -503,7 +503,7 @@ function SyncStateFooter({ syncState }: { syncState: SyncState | null }) {
               flexShrink: 0,
               backgroundColor: failed
                 ? "var(--accent-red)"
-                : "var(--text-secondary)",
+                : "var(--accent-green)",
             }}
           />
           <span style={{ fontWeight: 400 }}>{syncState.label}</span>
