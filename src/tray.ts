@@ -74,6 +74,10 @@ function openPopup(win: BrowserWindow, position: { x: number; y: number }): void
   win.setPosition(position.x, position.y);
   win.setIgnoreMouseEvents(false);
   win.setOpacity(1);
+  // focus() alone doesn't make an already-ordered-in window key (or activate the
+  // app): it would stay dimmed until clicked. show() does, and since the window
+  // is already ordered in it doesn't replay the open animation.
+  win.show();
   win.focus();
 }
 
