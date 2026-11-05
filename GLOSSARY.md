@@ -62,6 +62,10 @@ _Avoid_: Menu bar icon, status bar, status item
 The frameless, always-on-top window that appears below the Tray icon when clicked, left-aligned with the icon's left edge, displaying the ticket list.
 _Avoid_: Window, overlay, panel, dropdown
 
+**Popup session**:
+Everything the Popup holds while it is in use: the tickets and any error from the last fetch, what the user has typed, chosen and selected, and the Sync State clock. The search text and the selected row reset each time the Popup opens; the Filter Tab and Sort Order do not.
+_Avoid_: App state, store
+
 **Alert Icon**:
 The Tray icon variant that renders an orange dot, shown when the user has overdue or due-today tickets. Exists in separate light and dark variants to match the system menu bar theme.
 _Avoid_: Badge, notification dot, indicator

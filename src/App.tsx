@@ -1,9 +1,7 @@
-import { useState, useEffect, useRef } from "react";
-import type { Ticket } from "./jira-client";
-import type { Preferences } from "./preferences-store";
-import { cycleIndex, moveSelection } from "./list-selection";
-import { localDateString } from "./ticket-grouping";
-import { buildTicketListView, SORT_ORDER_OPTIONS } from "./ticket-list-view";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { createPopupSession, update } from "./popup-session";
+import type { PopupEffect, PopupEvent } from "./popup-session";
+import { SORT_ORDER_OPTIONS } from "./ticket-list-view";
 import type {
   FilterTab,
   FilterTabView,
@@ -650,147 +648,106 @@ function ListHeader({
 
 const SYNC_STATE_TICK_MS = 15_000;
 
+function runEffect(effect: PopupEffect, searchInput: HTMLInputElement | null) {
+  switch (effect.type) {
+    case "openUrl":
+      window.electronAPI.openUrl(effect.url);
+      break;
+    case "requestRefresh":
+      window.electronAPI.refresh();
+      break;
+    case "focusSearch":
+      searchInput?.focus();
+      searchInput?.select();
+      break;
+    case "persistPreferences":
+      window.electronAPI.setPreferences(effect.changes);
+      break;
+    case "blurActiveElement":
+      (document.activeElement as HTMLElement)?.blur();
+      break;
+  }
+}
+
 export function App() {
-  const [tickets, setTickets] = useState<Ticket[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [searchText, setSearchText] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   // Read synchronously from the main process so the first frame already shows
   // the saved Filter Tab and Sort Order.
-  const [preferences, setPreferences] = useState(() =>
-    window.electronAPI.getPreferences(),
+  const [session, setSession] = useState(() =>
+    createPopupSession({
+      preferences: window.electronAPI.getPreferences(),
+      now: Date.now(),
+    }),
   );
-  const { filterTab, sortOrder } = preferences;
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
-  const [lastErrorAt, setLastErrorAt] = useState<number | null>(null);
-  const [now, setNow] = useState(() => Date.now());
-  // Row highlighted for keyboard navigation (Ctrl+J / Ctrl+K, Enter to open).
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  // Always the latest session, so a key press sees the result of the one before it.
+  const sessionRef = useRef(session);
 
-  function updatePreferences(changes: Partial<Preferences>) {
-    setPreferences((current) => ({ ...current, ...changes }));
-    window.electronAPI.setPreferences(changes);
-  }
-
-  function handleRefresh() {
-    setTickets(null);
-    setError(null);
-    window.electronAPI.refresh();
-  }
+  // Returns whether the event was handled, so a key press can preventDefault.
+  const dispatch = useCallback((event: PopupEvent): boolean => {
+    const result = update(sessionRef.current, event);
+    sessionRef.current = result.session;
+    setSession(result.session);
+    for (const effect of result.effects) {
+      runEffect(effect, searchInputRef.current);
+    }
+    return result.handled;
+  }, []);
 
   useEffect(() => {
-    window.electronAPI.onTickets((incoming) => {
-      const receivedAt = Date.now();
-      setTickets(incoming);
-      setError(null);
-      setLastSyncedAt(receivedAt);
-      setNow(receivedAt);
+    window.electronAPI.onTickets((tickets) => {
+      dispatch({ type: "tickets", tickets, now: Date.now() });
     });
     window.electronAPI.onTicketsError((message) => {
-      const failedAt = Date.now();
-      setError(message);
-      setLastErrorAt(failedAt);
-      setNow(failedAt);
+      dispatch({ type: "ticketsError", message, now: Date.now() });
+    });
+    window.electronAPI.onWindowShow(() => {
+      dispatch({ type: "windowShow", now: Date.now() });
     });
 
     function onKeyDown(e: KeyboardEvent) {
-      if (e.metaKey && e.key === "r") {
-        e.preventDefault();
-        setTickets(null);
-        setError(null);
-        window.electronAPI.refresh();
-      }
-      if (e.metaKey && e.key === "f") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        searchInputRef.current?.select();
-      }
+      const focus =
+        e.target === document.body
+          ? "body"
+          : e.target === searchInputRef.current
+            ? "search"
+            : "other";
+      const handled = dispatch({
+        type: "key",
+        input: {
+          key: e.key,
+          code: e.code,
+          ctrl: e.ctrlKey,
+          meta: e.metaKey,
+          alt: e.altKey,
+          shift: e.shiftKey,
+          focus,
+        },
+      });
+      if (handled) e.preventDefault();
     }
     window.addEventListener("keydown", onKeyDown);
-
-    window.electronAPI.onWindowShow(() => {
-      (document.activeElement as HTMLElement)?.blur();
-      setSearchText("");
-      setSelectedIndex(0);
-      setNow(Date.now());
-    });
 
     // Re-evaluate the Sync State label while the Popup is visible so
     // "Synced 2m ago" keeps ageing.
     const ageTimer = setInterval(() => {
-      if (!document.hidden) setNow(Date.now());
+      if (!document.hidden) dispatch({ type: "tick", now: Date.now() });
     }, SYNC_STATE_TICK_MS);
 
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       clearInterval(ageTimer);
     };
-  }, []);
+  }, [dispatch]);
 
-  const isLoading = tickets === null && error === null;
-  const today = localDateString(new Date());
-  const { rows, tabs, emptyReason, syncState } = buildTicketListView({
-    tickets: tickets ?? [],
-    today,
-    filterTab,
-    searchText,
-    sortOrder,
-    lastSyncedAt,
-    lastErrorAt,
-    now,
-    loading: isLoading,
-  });
-  // Tickets can shrink under the selection (refetch, narrower search).
-  const activeIndex = Math.min(selectedIndex, Math.max(rows.length - 1, 0));
-
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [searchText, filterTab, sortOrder]);
+  const { searchText, sortOrder, activeIndex, error } = session;
+  const { rows, tabs, emptyReason, syncState } = session.view;
+  const isLoading = session.loading;
 
   useEffect(() => {
     document
       .querySelector('[data-selected="true"]')
       ?.scrollIntoView({ block: "nearest" });
   }, [activeIndex, rows.length]);
-
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      // e.code, not e.key: Ctrl+J would otherwise report a newline character.
-      const plainCtrl = e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey;
-      if (plainCtrl && (e.code === "KeyJ" || e.code === "KeyK")) {
-        // Ctrl+K would otherwise kill the line in the search field.
-        e.preventDefault();
-        const delta = e.code === "KeyJ" ? 1 : -1;
-        setSelectedIndex(moveSelection(activeIndex, delta, rows.length));
-        return;
-      }
-
-      // Tab / Shift+Tab switch Filter Tab instead of moving focus.
-      if (e.key === "Tab" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        e.preventDefault();
-        const current = tabs.findIndex((view) => view.selected);
-        const next = cycleIndex(current, e.shiftKey ? -1 : 1, tabs.length);
-        updatePreferences({ filterTab: tabs[next].tab });
-        return;
-      }
-
-      const plainEnter =
-        e.key === "Enter" &&
-        !e.ctrlKey &&
-        !e.metaKey &&
-        !e.altKey &&
-        !e.shiftKey;
-      // Leave Enter alone when a button (tab, sort menu…) has focus.
-      const canOpen =
-        e.target === document.body || e.target === searchInputRef.current;
-      if (plainEnter && canOpen && rows[activeIndex]) {
-        e.preventDefault();
-        window.electronAPI.openUrl(rows[activeIndex].ticket.url);
-      }
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [rows, activeIndex, tabs]);
 
   return (
     <div className="app-container">
@@ -813,7 +770,7 @@ export function App() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button
-            onClick={handleRefresh}
+            onClick={() => dispatch({ type: "refresh" })}
             style={{
               display: "flex",
               alignItems: "center",
@@ -856,19 +813,21 @@ export function App() {
       >
         <SearchField
           value={searchText}
-          onChange={setSearchText}
+          onChange={(text) => dispatch({ type: "searchChanged", text })}
           inputRef={searchInputRef}
         />
 
         <FilterTabRow
           tabs={tabs}
-          onSelect={(tab) => updatePreferences({ filterTab: tab })}
+          onSelect={(tab) => dispatch({ type: "filterTabChosen", tab })}
         />
       </div>
 
       <ListHeader
         sortOrder={sortOrder}
-        onSortOrderChange={(order) => updatePreferences({ sortOrder: order })}
+        onSortOrderChange={(order) =>
+          dispatch({ type: "sortOrderChosen", order })
+        }
       />
 
       {isLoading ? (
