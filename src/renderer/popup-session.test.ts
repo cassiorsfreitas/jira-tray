@@ -483,3 +483,35 @@ describe('an irrelevant key', () => {
     expect(result.handled).toBe(false);
   });
 });
+
+describe('closing the Popup with Esc', () => {
+  const escape = key({ key: 'Escape', code: 'Escape' });
+
+  it('asks the caller to close the Popup and handles the key', () => {
+    const session = loaded();
+    const result = update(session, escape);
+    expect(result.session).toBe(session);
+    expect(result.effects).toEqual([{ type: 'closePopup' }]);
+    expect(result.handled).toBe(true);
+  });
+
+  it('works while the search field has focus', () => {
+    const result = update(
+      loaded(),
+      key({ key: 'Escape', code: 'Escape', focus: 'search' }),
+    );
+    expect(result.effects).toEqual([{ type: 'closePopup' }]);
+  });
+
+  it('does not touch the search text, Filter Tab or selection', () => {
+    const before = run(
+      loaded(),
+      { type: 'searchChanged', text: 'IP' },
+      ctrlJ,
+    ).session;
+    const after = update(before, escape).session;
+    expect(after.searchText).toBe('IP');
+    expect(after.filterTab).toBe(before.filterTab);
+    expect(after.activeIndex).toBe(before.activeIndex);
+  });
+});

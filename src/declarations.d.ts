@@ -9,6 +9,7 @@ interface Window {
   electronAPI: {
     quit: () => void;
     refresh: () => void;
+    closePopup: () => void;
     openUrl: (url: string) => void;
     getPreferences: () => import('./shared/preferences').Preferences;
     setPreferences: (

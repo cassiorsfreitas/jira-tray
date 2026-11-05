@@ -5,6 +5,7 @@ import type { Preferences } from '../shared/preferences';
 contextBridge.exposeInMainWorld('electronAPI', {
   quit: () => ipcRenderer.send('quit'),
   refresh: () => ipcRenderer.send('refresh'),
+  closePopup: () => ipcRenderer.send('close-popup'),
   openUrl: (url: string) => ipcRenderer.send('open-url', url),
   getPreferences: (): Preferences => ipcRenderer.sendSync('get-preferences'),
   setPreferences: (changes: Partial<Preferences>) =>
