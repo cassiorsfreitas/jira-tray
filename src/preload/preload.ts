@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { Ticket } from '../shared/ticket';
+import type { Ticket, TicketsError } from '../shared/ticket';
 import type { Preferences } from '../shared/preferences';
 import type { ShortcutResult, ShortcutSettings } from '../shared/shortcut';
 import type {
@@ -32,9 +32,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onTickets: (callback: (tickets: Ticket[]) => void) => {
     ipcRenderer.on('tickets', (_event, tickets: Ticket[]) => callback(tickets));
   },
-  onTicketsError: (callback: (message: string) => void) => {
-    ipcRenderer.on('tickets-error', (_event, message: string) =>
-      callback(message),
+  onTicketsError: (callback: (error: TicketsError) => void) => {
+    ipcRenderer.on('tickets-error', (_event, error: TicketsError) =>
+      callback(error),
     );
   },
   onWindowShow: (callback: () => void) => {
