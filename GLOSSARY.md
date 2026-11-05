@@ -27,8 +27,8 @@ An ISO date string (`YYYY-MM-DD`) representing when a ticket is expected to be c
 _Avoid_: Deadline, target date
 
 **Credentials**:
-The three pieces of authentication data required to query Jira: domain, email, and API token. Stored persistently in the OS app-data folder.
-_Avoid_: Config, settings, auth, login
+The three pieces of authentication data required to query Jira: domain, email, and API token. Entered in the Settings window and stored persistently in the OS app-data folder, the token encrypted with the macOS Keychain.
+_Avoid_: Config, auth, login
 
 **Domain**:
 The Atlassian Cloud hostname identifying the user's Jira workspace (e.g., `yourcompany.atlassian.net`). One of the three Credential fields.
@@ -65,6 +65,10 @@ _Avoid_: Window, overlay, panel, dropdown
 **Popup session**:
 Everything the Popup holds while it is in use: the tickets and any error from the last fetch, what the user has typed, chosen and selected, and the Sync State clock. The search text and the selected row reset each time the Popup opens; the Filter Tab and Sort Order do not.
 _Avoid_: App state, store
+
+**Settings window**:
+The separate window, opened from the gear in the Popup footer or with ⌘,, where the user manages Credentials and other preferences. It opens by itself, as a welcome, when there are no Credentials yet. Not part of the Popup.
+_Avoid_: Preferences window, config screen, setup
 
 **Alert Icon**:
 The Tray icon variant that renders an orange dot, shown when the user has overdue or due-today tickets. Exists in separate light and dark variants to match the system menu bar theme.

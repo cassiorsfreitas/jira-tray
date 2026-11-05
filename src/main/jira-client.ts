@@ -1,11 +1,8 @@
 import { statusCategoryOf } from '../shared/status';
+import type { JiraCredentials } from '../shared/credentials';
 import type { Ticket } from '../shared/ticket';
 
-export interface JiraCredentials {
-  domain: string;
-  email: string;
-  token: string;
-}
+export type { JiraCredentials };
 
 const JQL = 'assignee = currentUser() AND statusCategory != Done ORDER BY due ASC';
 

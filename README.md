@@ -8,33 +8,15 @@ macOS tray app to centralize Jira tickets assigned to you across all boards.
 
 ## Credentials
 
-### Production
+On first launch a welcome window opens. Enter:
 
-On first launch, open Settings (tray icon → Settings) and enter:
-
-- **Jira Domain** — e.g. `yourcompany.atlassian.net`
+- **Jira domain** — e.g. `yourcompany.atlassian.net`
 - **Email** — the email associated with your Atlassian account
-- **API Token** — generate one at https://id.atlassian.com/manage-profile/security/api-tokens
+- **API token** — generate one at https://id.atlassian.com/manage-profile/security/api-tokens
 
-Credentials are stored in the OS app-data folder via `electron-store` and never written to disk in the project directory.
+Use **Test connection** to check them, then **Save**. To change them later, click the gear in the Popup footer or press `⌘,`.
 
-### Development
-
-Copy `.env.example` to `.env` and fill in your values:
-
-```bash
-cp .env.example .env
-```
-
-```
-JIRA_DOMAIN=yourcompany.atlassian.net
-JIRA_EMAIL=you@example.com
-JIRA_TOKEN=your_api_token_here
-```
-
-The main process loads this file via `dotenv` in development mode only. If the file is present, credentials are written to `electron-store` automatically on first launch, skipping the settings screen.
-
-`.env` is gitignored — never commit it.
+The domain and email are kept in the OS app-data folder via `electron-store`; the API token is encrypted with the macOS Keychain (Electron `safeStorage`). Nothing is written to the project directory, and there is no `.env` file.
 
 ---
 
