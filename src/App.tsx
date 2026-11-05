@@ -261,8 +261,9 @@ function TicketRow({
           >
             <span
               style={{
-                width: 6,
-                height: 6,
+                width: 4,
+                height: 4,
+                marginTop: 1,
                 borderRadius: "50%",
                 backgroundColor: statusTint,
                 flexShrink: 0,
