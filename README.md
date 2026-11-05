@@ -99,6 +99,7 @@ The global shortcut works from any app. Change it in **Settings → Keyboard**: 
 - Jira Tray only talks to your Jira site, over HTTPS, to read your tickets. It has no analytics, telemetry or automatic updates.
 - Your domain and email are stored in `~/Library/Application Support/Jira Tray`. The API token is encrypted with the macOS Keychain (Electron `safeStorage`) and is never shown again.
 - Nothing is written to the project folder, and there is no `.env` file.
+- To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ## Troubleshooting
 
