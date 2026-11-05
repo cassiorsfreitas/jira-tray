@@ -134,6 +134,7 @@ export function createTray(
   updateBadge: (count: number) => void;
   /** Opens or closes the Popup as if the Tray icon had been clicked. */
   toggle: () => void;
+  close: () => void;
 } {
   // On macOS, clicking the tray icon while the popup is open fires `blur` on
   // the popup first (hiding it), then fires `tray.click`. Without a guard the
@@ -199,5 +200,10 @@ export function createTray(
     applyIcon();
   }
 
-  return { tray, updateBadge, toggle: () => togglePopup(tray.getBounds()) };
+  return {
+    tray,
+    updateBadge,
+    toggle: () => togglePopup(tray.getBounds()),
+    close: () => closePopup(popupWindow),
+  };
 }

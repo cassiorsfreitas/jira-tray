@@ -11,6 +11,7 @@ import type {
 contextBridge.exposeInMainWorld('electronAPI', {
   quit: () => ipcRenderer.send('quit'),
   refresh: () => ipcRenderer.send('refresh'),
+  closePopup: () => ipcRenderer.send('close-popup'),
   openUrl: (url: string) => ipcRenderer.send('open-url', url),
   openSettings: () => ipcRenderer.send('open-settings'),
   closeSettings: () => ipcRenderer.send('close-settings'),

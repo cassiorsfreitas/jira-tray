@@ -23,7 +23,11 @@ export function ListHeader({
       if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
     }
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        setOpen(false);
+        // Esc closes the menu first; it must not also close the Popup.
+        e.stopPropagation();
+      }
     }
     // The Popup hides on blur; make sure a menu left open doesn't reappear.
     function onWindowBlur() {
