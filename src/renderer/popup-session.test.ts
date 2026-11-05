@@ -135,6 +135,7 @@ describe('a failed fetch', () => {
     const { session } = update(fresh(), {
       type: 'ticketsError',
       message: 'Jira API error: 401',
+      needsSettings: false,
       now: NOW,
     });
     expect(session.loading).toBe(false);
@@ -149,6 +150,7 @@ describe('a failed fetch', () => {
     const { session } = update(loaded(), {
       type: 'ticketsError',
       message: 'offline',
+      needsSettings: false,
       now: NOW + MINUTE,
     });
     expect(session.error).toBe('offline');
@@ -159,6 +161,7 @@ describe('a failed fetch', () => {
     const failed = update(loaded(), {
       type: 'ticketsError',
       message: 'offline',
+      needsSettings: false,
       now: NOW + MINUTE,
     }).session;
     const recovered = update(failed, {
@@ -176,6 +179,7 @@ describe('refreshing', () => {
     const failed = update(loaded(), {
       type: 'ticketsError',
       message: 'offline',
+      needsSettings: false,
       now: NOW,
     }).session;
     const { session, effects } = update(failed, { type: 'refresh' });
@@ -188,6 +192,7 @@ describe('refreshing', () => {
     const failed = update(fresh(), {
       type: 'ticketsError',
       message: 'offline',
+      needsSettings: false,
       now: NOW,
     }).session;
     expect(
@@ -533,5 +538,48 @@ describe('opening Settings with ⌘,', () => {
       key({ meta: true, key: ',', focus: 'search' }),
     );
     expect(result.effects).toEqual([{ type: 'openSettings' }]);
+  });
+});
+
+describe('when Settings are needed', () => {
+  function failed(needsSettings: boolean, session = fresh()) {
+    return update(session, {
+      type: 'ticketsError',
+      message: needsSettings ? 'Jira API error: 401 Unauthorized' : 'offline',
+      needsSettings,
+      now: NOW,
+    }).session;
+  }
+
+  it('is not the case for a new session', () => {
+    expect(fresh().settingsNeeded).toBe(false);
+  });
+
+  it('is the case when the fetch failed because of the Credentials', () => {
+    expect(failed(true).settingsNeeded).toBe(true);
+  });
+
+  it('is not the case when the fetch failed for another reason', () => {
+    expect(failed(false).settingsNeeded).toBe(false);
+  });
+
+  it('stays while refreshing, so the hint does not blink out', () => {
+    const refreshing = update(failed(true), { type: 'refresh' }).session;
+    expect(refreshing.loading).toBe(true);
+    expect(refreshing.settingsNeeded).toBe(true);
+  });
+
+  it('is cleared by the next successful fetch', () => {
+    const recovered = update(failed(true), {
+      type: 'tickets',
+      tickets: [IP1],
+      now: NOW + MINUTE,
+    }).session;
+    expect(recovered.settingsNeeded).toBe(false);
+  });
+
+  it('follows the latest failure', () => {
+    expect(failed(false, failed(true)).settingsNeeded).toBe(false);
+    expect(failed(true, failed(false)).settingsNeeded).toBe(true);
   });
 });

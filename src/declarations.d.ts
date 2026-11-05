@@ -34,7 +34,9 @@ interface Window {
     onTickets: (
       callback: (tickets: import('./shared/ticket').Ticket[]) => void,
     ) => void;
-    onTicketsError: (callback: (message: string) => void) => void;
+    onTicketsError: (
+      callback: (error: import('./shared/ticket').TicketsError) => void,
+    ) => void;
     onWindowShow: (callback: () => void) => void;
   };
 }

@@ -20,7 +20,14 @@ export function LoadingState() {
   );
 }
 
-export function ErrorState({ message }: { message: string }) {
+export function ErrorState({
+  message,
+  settingsNeeded,
+}: {
+  message: string;
+  /** The error is about the Credentials: point the user at the Settings button. */
+  settingsNeeded: boolean;
+}) {
   return (
     <div
       style={{
@@ -38,11 +45,13 @@ export function ErrorState({ message }: { message: string }) {
         style={{
           fontSize: 12,
           fontWeight: 600,
-          color: 'var(--accent-red)',
+          color: settingsNeeded ? 'var(--accent-orange)' : 'var(--accent-red)',
           margin: 0,
         }}
       >
-        Failed to load tickets
+        {settingsNeeded
+          ? 'Jira connection needs attention'
+          : 'Failed to load tickets'}
       </p>
       <p
         style={{
@@ -54,6 +63,17 @@ export function ErrorState({ message }: { message: string }) {
       >
         {message}
       </p>
+      {settingsNeeded && (
+        <p
+          style={{
+            fontSize: 12,
+            color: 'var(--text-primary)',
+            margin: '8px 0 0',
+          }}
+        >
+          Open Settings below to set it up.
+        </p>
+      )}
     </div>
   );
 }

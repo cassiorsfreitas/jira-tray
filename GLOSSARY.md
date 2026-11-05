@@ -67,12 +67,16 @@ Everything the Popup holds while it is in use: the tickets and any error from th
 _Avoid_: App state, store
 
 **Settings window**:
-The separate window, opened from the gear in the Popup footer or with ⌘,, where the user manages Credentials and other preferences. It opens by itself, as a welcome, when there are no Credentials yet. Not part of the Popup.
+The separate window, opened from the Settings button in the Popup footer or with ⌘,, where the user manages Credentials and other preferences. When there are no Credentials yet, or Jira rejects them, the Settings button shows the Attention Dot to point the user there. Not part of the Popup.
 _Avoid_: Preferences window, config screen, setup
 
 **Global shortcut**:
 The system-wide key combination that opens and closes the Popup, even when the app is in the background. Recorded in the Settings window, default ⌃⌥⌘J; it needs at least one modifier and can be cleared, leaving the Tray as the only way in. Distinct from the fixed shortcuts that work inside the Popup.
 _Avoid_: Hotkey, accelerator, toggle key
+
+**Attention Dot**:
+The pulsing orange dot on the Popup footer's Settings button, shown when the connection needs the user: there are no Credentials, or Jira rejected them (401 or 403). Not shown for a network failure or a Jira outage, which fix themselves. Cleared by the next successful fetch.
+_Avoid_: Badge, notification, warning
 
 **Alert Icon**:
 The Tray icon variant that renders an orange dot, shown when the user has overdue or due-today tickets. Exists in separate light and dark variants to match the system menu bar theme.

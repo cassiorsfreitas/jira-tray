@@ -68,8 +68,13 @@ export function usePopupSession(): {
     window.electronAPI.onTickets((tickets) => {
       dispatch({ type: 'tickets', tickets, now: Date.now() });
     });
-    window.electronAPI.onTicketsError((message) => {
-      dispatch({ type: 'ticketsError', message, now: Date.now() });
+    window.electronAPI.onTicketsError(({ message, needsSettings }) => {
+      dispatch({
+        type: 'ticketsError',
+        message,
+        needsSettings,
+        now: Date.now(),
+      });
     });
     window.electronAPI.onWindowShow(() => {
       dispatch({ type: 'windowShow', now: Date.now() });

@@ -4,6 +4,22 @@ import type { Ticket } from '../shared/ticket';
 
 export type { JiraCredentials };
 
+/** A non-2xx answer from Jira. */
+export class JiraApiError extends Error {
+  constructor(
+    readonly status: number,
+    statusText: string,
+  ) {
+    super(`Jira API error: ${status} ${statusText}`);
+    this.name = 'JiraApiError';
+  }
+}
+
+/** Jira rejected the Credentials (401 or 403), as opposed to being unreachable or failing. */
+export function isAuthError(err: unknown): boolean {
+  return err instanceof JiraApiError && (err.status === 401 || err.status === 403);
+}
+
 const JQL = 'assignee = currentUser() AND statusCategory != Done ORDER BY due ASC';
 
 interface JiraIssue {
@@ -31,7 +47,7 @@ export async function fetchJiraTickets({ domain, email, token }: JiraCredentials
   });
 
   if (!response.ok) {
-    throw new Error(`Jira API error: ${response.status} ${response.statusText}`);
+    throw new JiraApiError(response.status, response.statusText);
   }
 
   const data = (await response.json()) as { issues: JiraIssue[]; isLast: boolean; nextPageToken?: string };

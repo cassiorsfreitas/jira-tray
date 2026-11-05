@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fetchJiraTickets } from './jira-client';
+import { fetchJiraTickets, isAuthError } from './jira-client';
 
-const CREDS = { domain: 'mycompany.atlassian.net', email: 'user@example.com', token: 'api-token-123' };
+const CREDS = {
+  domain: 'mycompany.atlassian.net',
+  email: 'user@example.com',
+  token: 'api-token-123',
+};
 
 const makeIssue = (overrides: Record<string, unknown> = {}) => ({
   key: 'PROJ-1',
@@ -54,7 +58,9 @@ describe('JQL query', () => {
 
     const [, init] = fetchSpy.mock.calls[0];
     const body = JSON.parse(init?.body as string);
-    expect(body.jql).toBe('assignee = currentUser() AND statusCategory != Done ORDER BY due ASC');
+    expect(body.jql).toBe(
+      'assignee = currentUser() AND statusCategory != Done ORDER BY due ASC',
+    );
   });
 
   it('asks Jira for the created field', async () => {
@@ -85,8 +91,11 @@ describe('Ticket normalisation', () => {
       issues: [
         makeIssue({
           summary: 'Fix the bug',
-          status: { name: 'In Progress', statusCategory: { key: 'indeterminate' } },
-                duedate: '2026-10-25',
+          status: {
+            name: 'In Progress',
+            statusCategory: { key: 'indeterminate' },
+          },
+          duedate: '2026-10-25',
         }),
       ],
       isLast: true,
@@ -141,7 +150,11 @@ describe('dueDate handling', () => {
 
 // --- Status filtering ---
 describe('Status filtering', () => {
-  const issueWithStatus = (key: string, name: string, categoryKey = 'indeterminate') => ({
+  const issueWithStatus = (
+    key: string,
+    name: string,
+    categoryKey = 'indeterminate',
+  ) => ({
     ...makeIssue({ status: { name, statusCategory: { key: categoryKey } } }),
     key,
   });
@@ -179,7 +192,10 @@ describe('Status filtering', () => {
 
   it('matches the Status name case-insensitively', async () => {
     mockFetch(200, {
-      issues: [issueWithStatus('A-1', 'TO DO', 'new'), issueWithStatus('A-2', ' in progress ')],
+      issues: [
+        issueWithStatus('A-1', 'TO DO', 'new'),
+        issueWithStatus('A-2', ' in progress '),
+      ],
       isLast: true,
     });
 
@@ -201,5 +217,39 @@ describe('error handling', () => {
     vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network error'));
 
     await expect(fetchJiraTickets(CREDS)).rejects.toThrow('Network error');
+  });
+});
+
+describe('isAuthError', () => {
+  it.each([401, 403])('is true when Jira answers %i', async (status) => {
+    mockFetch(status, { errorMessages: ['nope'] });
+
+    const error = await fetchJiraTickets(CREDS).catch((err: unknown) => err);
+
+    expect(isAuthError(error)).toBe(true);
+  });
+
+  it.each([404, 429, 500, 503])(
+    'is false when Jira answers %i',
+    async (status) => {
+      mockFetch(status, {});
+
+      const error = await fetchJiraTickets(CREDS).catch((err: unknown) => err);
+
+      expect(isAuthError(error)).toBe(false);
+    },
+  );
+
+  it('is false for a network failure', async () => {
+    vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network error'));
+
+    const error = await fetchJiraTickets(CREDS).catch((err: unknown) => err);
+
+    expect(isAuthError(error)).toBe(false);
+  });
+
+  it('is false for anything that is not an error', () => {
+    expect(isAuthError('401')).toBe(false);
+    expect(isAuthError(undefined)).toBe(false);
   });
 });

@@ -6,12 +6,14 @@ import { TicketList } from './TicketList';
 export function ListBody({
   loading,
   error,
+  settingsNeeded,
   view,
   activeIndex,
   onOpen,
 }: {
   loading: boolean;
   error: string | null;
+  settingsNeeded: boolean;
   view: TicketListView;
   activeIndex: number;
   onOpen: (url: string) => void;
@@ -27,7 +29,7 @@ export function ListBody({
   return (
     <main className="app-main app-main-scroll">
       {error ? (
-        <ErrorState message={error} />
+        <ErrorState message={error} settingsNeeded={settingsNeeded} />
       ) : view.rows.length > 0 ? (
         <TicketList
           rows={view.rows}

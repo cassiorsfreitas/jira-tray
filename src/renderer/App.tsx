@@ -7,7 +7,15 @@ import { usePopupSession } from './hooks/use-popup-session';
 
 export function App() {
   const { session, dispatch, searchInputRef } = usePopupSession();
-  const { searchText, sortOrder, activeIndex, error, loading, view } = session;
+  const {
+    searchText,
+    sortOrder,
+    activeIndex,
+    error,
+    loading,
+    settingsNeeded,
+    view,
+  } = session;
 
   return (
     <div className="app-container">
@@ -31,12 +39,14 @@ export function App() {
       <ListBody
         loading={loading}
         error={error}
+        settingsNeeded={settingsNeeded}
         view={view}
         activeIndex={activeIndex}
         onOpen={(url) => window.electronAPI.openUrl(url)}
       />
       <SyncStateFooter
         syncState={view.syncState}
+        settingsNeeded={settingsNeeded}
         onOpenSettings={() => window.electronAPI.openSettings()}
       />
     </div>

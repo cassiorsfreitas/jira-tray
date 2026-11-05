@@ -9,6 +9,7 @@
   --accent-red: #ff6161;
   --accent-green: #59d499;
   --accent-yellow: #eab308;
+  --accent-orange: #ff9500;
   --accent-purple: #a78bfa;
 }
 
@@ -196,6 +197,7 @@ body {
 }
 
 .footer-icon-button {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -340,4 +342,46 @@ body {
 .shortcut-recorder[aria-pressed='true'] {
   color: var(--accent-blue);
   border-color: var(--accent-blue);
+}
+
+/* The orange dot on the Settings button, same orange as the Alert Icon, with a
+   ring that pulses outwards to draw the eye. */
+.footer-icon-button-attention {
+  color: var(--text-primary);
+}
+
+.attention-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-orange);
+}
+
+.attention-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent-orange);
+  animation: attention-pulse 1.6s ease-out infinite;
+}
+
+@keyframes attention-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attention-dot::after {
+    display: none;
+  }
 }
