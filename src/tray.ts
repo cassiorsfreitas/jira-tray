@@ -129,7 +129,12 @@ export function createPopupWindow(opts: {
 export function createTray(
   popupWindow: BrowserWindow,
   opts: { onShow: () => void },
-): { tray: Tray; updateBadge: (count: number) => void } {
+): {
+  tray: Tray;
+  updateBadge: (count: number) => void;
+  /** Opens or closes the Popup as if the Tray icon had been clicked. */
+  toggle: () => void;
+} {
   // On macOS, clicking the tray icon while the popup is open fires `blur` on
   // the popup first (hiding it), then fires `tray.click`. Without a guard the
   // click handler would see the popup as closed and reopen the window instead
@@ -161,7 +166,7 @@ export function createTray(
   // Re-apply the alert icon whenever the system theme changes (light ↔ dark).
   nativeTheme.on('updated', applyIcon);
 
-  tray.on('click', (_event, bounds) => {
+  function togglePopup(bounds: Electron.Rectangle): void {
     const BLUR_CLICK_GUARD_MS = 200;
     const closedByBlur =
       !isPopupOpen(popupWindow) && Date.now() - hiddenAt < BLUR_CLICK_GUARD_MS;
@@ -185,12 +190,14 @@ export function createTray(
     openPopup(popupWindow, { x, y });
     popupWindow.webContents.send('window-show');
     opts.onShow();
-  });
+  }
+
+  tray.on('click', (_event, bounds) => togglePopup(bounds));
 
   function updateBadge(count: number): void {
     badgeCount = count;
     applyIcon();
   }
 
-  return { tray, updateBadge };
+  return { tray, updateBadge, toggle: () => togglePopup(tray.getBounds()) };
 }

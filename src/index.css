@@ -76,11 +76,16 @@ body {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.ticket-row-selected {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .ticket-row-arrow {
   opacity: 0;
 }
 
-.ticket-row:hover .ticket-row-arrow {
+.ticket-row:hover .ticket-row-arrow,
+.ticket-row-selected .ticket-row-arrow {
   opacity: 1;
 }
 
@@ -142,6 +147,34 @@ body {
 }
 
 .sort-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Replaced by the custom clear button (.search-clear). */
+.search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* The clear button, in the same spot as the ⌘F hint. */
+.search-clear {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.search-clear:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 

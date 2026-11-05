@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { Ticket } from "./jira-client";
 import type { Preferences } from "./preferences-store";
+import { cycleIndex, moveSelection } from "./list-selection";
 import { localDateString } from "./ticket-grouping";
 import { buildTicketListView, SORT_ORDER_OPTIONS } from "./ticket-list-view";
 import type {
@@ -92,6 +93,22 @@ function RefreshIcon() {
   );
 }
 
+function ClearIcon() {
+  return (
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+    >
+      <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+    </svg>
+  );
+}
+
 function QuitIcon() {
   return (
     <svg
@@ -135,14 +152,21 @@ const TRUNCATE = {
   whiteSpace: "nowrap",
 } as const;
 
-function TicketRow({ row }: { row: TicketRowData }) {
+function TicketRow({
+  row,
+  selected,
+}: {
+  row: TicketRowData;
+  selected: boolean;
+}) {
   const { ticket, group, badge } = row;
   const statusTint = statusColor(ticket.status, ticket.statusCategory);
 
   return (
     <button
       onClick={() => window.electronAPI.openUrl(ticket.url)}
-      className="ticket-row focus:outline-none"
+      className={`ticket-row focus:outline-none${selected ? " ticket-row-selected" : ""}`}
+      data-selected={selected}
       style={{
         display: "flex",
         alignItems: "stretch",
@@ -306,7 +330,21 @@ function SearchField({
             borderRadius: 6,
           }}
         />
-        {!value && <kbd className="search-shortcut">⌘F</kbd>}
+        {value ? (
+          <button
+            type="button"
+            aria-label="Clear search"
+            onClick={() => {
+              onChange("");
+              inputRef.current?.focus();
+            }}
+            className="search-clear"
+          >
+            <ClearIcon />
+          </button>
+        ) : (
+          <kbd className="search-shortcut">⌘F</kbd>
+        )}
       </div>
     </div>
   );
@@ -623,6 +661,8 @@ export function App() {
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [lastErrorAt, setLastErrorAt] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  // Row highlighted for keyboard navigation (Ctrl+J / Ctrl+K, Enter to open).
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   function updatePreferences(changes: Partial<Preferences>) {
     setPreferences((current) => ({ ...current, ...changes }));
@@ -668,6 +708,7 @@ export function App() {
     window.electronAPI.onWindowShow(() => {
       (document.activeElement as HTMLElement)?.blur();
       setSearchText("");
+      setSelectedIndex(0);
       setNow(Date.now());
     });
 
@@ -695,6 +736,57 @@ export function App() {
     now,
   });
   const isLoading = tickets === null && error === null;
+  // Tickets can shrink under the selection (refetch, narrower search).
+  const activeIndex = Math.min(selectedIndex, Math.max(rows.length - 1, 0));
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [searchText, filterTab, sortOrder]);
+
+  useEffect(() => {
+    document
+      .querySelector('[data-selected="true"]')
+      ?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex, rows.length]);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      // e.code, not e.key: Ctrl+J would otherwise report a newline character.
+      const plainCtrl = e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey;
+      if (plainCtrl && (e.code === "KeyJ" || e.code === "KeyK")) {
+        // Ctrl+K would otherwise kill the line in the search field.
+        e.preventDefault();
+        const delta = e.code === "KeyJ" ? 1 : -1;
+        setSelectedIndex(moveSelection(activeIndex, delta, rows.length));
+        return;
+      }
+
+      // Tab / Shift+Tab switch Filter Tab instead of moving focus.
+      if (e.key === "Tab" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const current = tabs.findIndex((view) => view.selected);
+        const next = cycleIndex(current, e.shiftKey ? -1 : 1, tabs.length);
+        updatePreferences({ filterTab: tabs[next].tab });
+        return;
+      }
+
+      const plainEnter =
+        e.key === "Enter" &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.shiftKey;
+      // Leave Enter alone when a button (tab, sort menu…) has focus.
+      const canOpen =
+        e.target === document.body || e.target === searchInputRef.current;
+      if (plainEnter && canOpen && rows[activeIndex]) {
+        e.preventDefault();
+        window.electronAPI.openUrl(rows[activeIndex].ticket.url);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [rows, activeIndex, tabs]);
 
   return (
     <div className="app-container">
@@ -792,9 +884,9 @@ export function App() {
                 padding: `${LIST_PADDING_Y}px 8px`,
               }}
             >
-              {rows.map((row) => (
+              {rows.map((row, index) => (
                 <li key={row.ticket.key}>
-                  <TicketRow row={row} />
+                  <TicketRow row={row} selected={index === activeIndex} />
                 </li>
               ))}
             </ul>

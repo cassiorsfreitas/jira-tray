@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { app, ipcMain, shell } from 'electron';
+import { app, globalShortcut, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { createPopupWindow, createTray, isPopupOpen } from './tray';
@@ -18,6 +18,9 @@ if (started) {
 if (process.platform === 'darwin') {
   app.dock?.hide();
 }
+
+// Hyper key (Ctrl+Alt+Shift+Cmd) + J, e.g. Caps Lock remapped by Raycast.
+const TOGGLE_SHORTCUT = 'Control+Alt+Shift+Command+J';
 
 app.whenReady().then(() => {
   // In development, load .env and seed electron-store on first launch if empty.
@@ -65,11 +68,15 @@ app.whenReady().then(() => {
     }
   });
 
-  const { updateBadge } = createTray(popupWindow, {
+  const { updateBadge, toggle } = createTray(popupWindow, {
     onShow: () => {
       void doFetch();
     },
   });
+
+  if (!globalShortcut.register(TOGGLE_SHORTCUT, toggle)) {
+    console.warn(`Could not register global shortcut ${TOGGLE_SHORTCUT}`);
+  }
 
   ipcMain.on('quit', () => {
     app.quit();
@@ -92,6 +99,10 @@ app.whenReady().then(() => {
   ipcMain.on('open-url', (_, url: string) => {
     shell.openExternal(url);
   });
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
 
 // Tray apps stay alive even when all windows are hidden — never quit on
