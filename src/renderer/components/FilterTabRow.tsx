@@ -27,6 +27,9 @@ export function FilterTabRow({
           key={tab}
           role="tab"
           aria-selected={selected}
+          // Tab switches Filter Tab instead of moving focus, so a focused tab
+          // button would stay stuck; don't let a click focus it.
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => onSelect(tab)}
           style={{
             display: 'flex',
