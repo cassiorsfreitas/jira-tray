@@ -10,6 +10,10 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    // Without an extension, packager picks the .icns on macOS.
+    icon: 'src/assets/app-icon',
+    appBundleId: 'io.github.cassiorsfreitas.jira-tray',
+    appCategoryType: 'public.app-category.productivity',
     // Prevent the app from appearing in the Dock and Cmd-Tab switcher on macOS.
     extendInfo: {
       LSUIElement: '1',
