@@ -7,7 +7,6 @@ const base: Omit<Ticket, 'dueDate'> = {
   title: 'Example ticket',
   status: 'In Progress',
   statusCategory: 'inprogress',
-  priority: 'medium',
   url: 'https://example.atlassian.net/browse/PROJ-1',
   board: 'Example Project',
   created: '2026-10-01T09:30:00.000+0000',
