@@ -25,7 +25,13 @@ export interface KeyInput {
 
 export type PopupEvent =
   | { type: 'tickets'; tickets: Ticket[]; now: number }
-  | { type: 'ticketsError'; message: string; now: number }
+  | {
+      type: 'ticketsError';
+      message: string;
+      /** There are no Credentials, or Jira rejected them. */
+      needsSettings: boolean;
+      now: number;
+    }
   /** The refresh button, and ⌘R. */
   | { type: 'refresh' }
   | { type: 'windowShow'; now: number }
@@ -64,6 +70,12 @@ export interface PopupSession {
   /** True from a refresh (or the start) until the next result arrives. */
   readonly loading: boolean;
   readonly error: string | null;
+  /**
+   * The last fetch failed because of the Credentials (missing or rejected), so
+   * the user should open Settings. Stays up while refreshing; the next
+   * successful fetch clears it.
+   */
+  readonly settingsNeeded: boolean;
   readonly [CORE]: Core;
 }
 
@@ -86,6 +98,7 @@ export function createPopupSession(init: {
     sortOrder: init.preferences.sortOrder,
     lastSyncedAt: null,
     lastErrorAt: null,
+    settingsNeeded: false,
     now: init.now,
     selectedIndex: 0,
   });
@@ -123,6 +136,7 @@ interface Core {
   sortOrder: SortOrder;
   lastSyncedAt: number | null;
   lastErrorAt: number | null;
+  settingsNeeded: boolean;
   now: number;
   /** Not clamped, so the selection survives the list shrinking and growing back. */
   selectedIndex: number;
@@ -162,6 +176,7 @@ function present(core: Core): PopupSession {
     ),
     loading,
     error: core.load.phase === 'failed' ? core.load.message : null,
+    settingsNeeded: core.settingsNeeded,
     [CORE]: core,
   };
 }
@@ -177,6 +192,7 @@ function reduce(session: PopupSession, event: PopupEvent): Step {
       return step({
         ...core,
         load: { phase: 'ready', tickets: event.tickets },
+        settingsNeeded: false,
         lastSyncedAt: event.now,
         now: event.now,
       });
@@ -189,6 +205,7 @@ function reduce(session: PopupSession, event: PopupEvent): Step {
           tickets: ticketsOf(core.load),
         },
         lastErrorAt: event.now,
+        settingsNeeded: event.needsSettings,
         now: event.now,
       });
     case 'refresh':

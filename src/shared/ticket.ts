@@ -11,3 +11,10 @@ export interface Ticket {
   url: string;
   board: string;
 }
+
+/** A failed fetch, as the main process reports it to the Popup. */
+export interface TicketsError {
+  message: string;
+  /** The user has to open Settings: there are no Credentials, or Jira rejected them. */
+  needsSettings: boolean;
+}

@@ -9,7 +9,8 @@ import { loadToggleShortcut, saveToggleShortcut } from './shortcut-store';
 import { createToggleShortcut } from './toggle-shortcut';
 import type { ShortcutResult } from '../shared/shortcut';
 import type { Preferences } from '../shared/preferences';
-import { fetchJiraTickets } from './jira-client';
+import type { TicketsError } from '../shared/ticket';
+import { fetchJiraTickets, isAuthError } from './jira-client';
 import { validateCredentialsInput } from '../shared/credentials';
 import type {
   CredentialsInput,
@@ -45,18 +46,15 @@ app.whenReady().then(() => {
     ),
   });
 
-  // First launch: welcome the user on the Settings window instead of leaving
-  // them with an empty Popup and no way to connect.
-  if (!loadCredentials()) settingsWindow.open();
-
   async function doFetch(): Promise<void> {
     // Read on every fetch so Credentials saved in Settings apply without a restart.
     const credentials = loadCredentials();
     if (!credentials) {
-      popupWindow.webContents.send(
-        'tickets-error',
-        'No Jira credentials configured',
-      );
+      const error: TicketsError = {
+        message: 'No Jira credentials configured',
+        needsSettings: true,
+      };
+      popupWindow.webContents.send('tickets-error', error);
       return;
     }
     try {
@@ -67,8 +65,11 @@ app.whenReady().then(() => {
       const { overdue, today: todayTickets } = groupTickets(tickets, today);
       updateBadge(overdue.length + todayTickets.length);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      popupWindow.webContents.send('tickets-error', message);
+      const error: TicketsError = {
+        message: err instanceof Error ? err.message : String(err),
+        needsSettings: isAuthError(err),
+      };
+      popupWindow.webContents.send('tickets-error', error);
       updateBadge(0);
     }
   }
