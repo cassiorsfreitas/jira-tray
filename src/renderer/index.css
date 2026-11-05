@@ -302,6 +302,11 @@ body {
   background: rgba(255, 255, 255, 0.1);
 }
 
+.settings-button:focus-visible {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
 .settings-button:disabled {
   opacity: 0.5;
   cursor: default;
@@ -330,4 +335,9 @@ body {
 
 .settings-link:hover {
   text-decoration: underline;
+}
+
+.shortcut-recorder[aria-pressed='true'] {
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
 }

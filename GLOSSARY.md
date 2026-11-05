@@ -70,6 +70,10 @@ _Avoid_: App state, store
 The separate window, opened from the gear in the Popup footer or with ⌘,, where the user manages Credentials and other preferences. It opens by itself, as a welcome, when there are no Credentials yet. Not part of the Popup.
 _Avoid_: Preferences window, config screen, setup
 
+**Global shortcut**:
+The system-wide key combination that opens and closes the Popup, even when the app is in the background. Recorded in the Settings window, default ⌃⌥⌘J; it needs at least one modifier and can be cleared, leaving the Tray as the only way in. Distinct from the fixed shortcuts that work inside the Popup.
+_Avoid_: Hotkey, accelerator, toggle key
+
 **Alert Icon**:
 The Tray icon variant that renders an orange dot, shown when the user has overdue or due-today tickets. Exists in separate light and dark variants to match the system menu bar theme.
 _Avoid_: Badge, notification dot, indicator

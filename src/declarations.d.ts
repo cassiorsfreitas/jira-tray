@@ -17,6 +17,11 @@ interface Window {
     setPreferences: (
       changes: Partial<import('./shared/preferences').Preferences>,
     ) => void;
+    getShortcut: () => import('./shared/shortcut').ShortcutSettings;
+    setShortcut: (
+      accelerator: string | null,
+    ) => Promise<import('./shared/shortcut').ShortcutResult>;
+    setShortcutRecording: (recording: boolean) => void;
     getCredentials: () =>
       | import('./shared/credentials').CredentialsSummary
       | null;
