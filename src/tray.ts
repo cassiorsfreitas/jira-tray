@@ -48,6 +48,35 @@ function buildAlertIcon(dark: boolean) {
   return img;
 }
 
+// ── Popup visibility ────────────────────────────────────────────────────────
+//
+// The popup window is never hidden for real. macOS plays a window-open "pop"
+// (a brief scale-up with a fade) every time a hidden window is ordered back
+// in, which makes the popup look like it resizes and re-renders on every open.
+// Instead the window stays ordered in at all times and is "closed" by making
+// it fully transparent and click-through, "opened" by reversing that. Changing
+// the window opacity doesn't trigger the system animation.
+
+const openPopups = new WeakSet<BrowserWindow>();
+
+export function isPopupOpen(win: BrowserWindow): boolean {
+  return openPopups.has(win);
+}
+
+function closePopup(win: BrowserWindow): void {
+  openPopups.delete(win);
+  win.setOpacity(0);
+  win.setIgnoreMouseEvents(true);
+}
+
+function openPopup(win: BrowserWindow, position: { x: number; y: number }): void {
+  openPopups.add(win);
+  win.setPosition(position.x, position.y);
+  win.setIgnoreMouseEvents(false);
+  win.setOpacity(1);
+  win.focus();
+}
+
 // ── Public API ──────────────────────────────────────────────────────────────
 
 export function createPopupWindow(opts: {
@@ -73,6 +102,17 @@ export function createPopupWindow(opts: {
     },
   });
 
+  // Start closed: invisible and click-through, but ordered in (see above).
+  win.setOpacity(0);
+  win.setIgnoreMouseEvents(true);
+  // Without this the always-ordered-in window would stay on the Space it was
+  // created in, and opening the popup from another Space would switch back to it.
+  win.setVisibleOnAllWorkspaces(true, {
+    visibleOnFullScreen: true,
+    skipTransformProcessType: true,
+  });
+  win.showInactive();
+
   if (opts.devServerUrl) {
     void win.loadURL(opts.devServerUrl);
   } else {
@@ -88,14 +128,15 @@ export function createTray(
 ): { tray: Tray; updateBadge: (count: number) => void } {
   // On macOS, clicking the tray icon while the popup is open fires `blur` on
   // the popup first (hiding it), then fires `tray.click`. Without a guard the
-  // click handler would see isVisible()===false and reopen the window instead
+  // click handler would see the popup as closed and reopen the window instead
   // of treating the click as a close-toggle. We record the hide timestamp so
   // the click handler can skip the reopen if it arrives within 200 ms.
   let hiddenAt = 0;
 
   popupWindow.on('blur', () => {
+    if (!isPopupOpen(popupWindow)) return;
     hiddenAt = Date.now();
-    popupWindow.hide();
+    closePopup(popupWindow);
   });
 
   const defaultIcon = buildDefaultIcon();
@@ -119,11 +160,11 @@ export function createTray(
   tray.on('click', (_event, bounds) => {
     const BLUR_CLICK_GUARD_MS = 200;
     const closedByBlur =
-      !popupWindow.isVisible() && Date.now() - hiddenAt < BLUR_CLICK_GUARD_MS;
+      !isPopupOpen(popupWindow) && Date.now() - hiddenAt < BLUR_CLICK_GUARD_MS;
     if (closedByBlur) return;
 
-    if (popupWindow.isVisible()) {
-      popupWindow.hide();
+    if (isPopupOpen(popupWindow)) {
+      closePopup(popupWindow);
       return;
     }
 
@@ -137,10 +178,8 @@ export function createTray(
       { width, height },
       display.workArea,
     );
-    popupWindow.setPosition(x, y);
-    popupWindow.show();
+    openPopup(popupWindow, { x, y });
     popupWindow.webContents.send('window-show');
-    popupWindow.focus();
     opts.onShow();
   });
 
