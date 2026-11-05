@@ -4,8 +4,22 @@
   "version": "1.0.0",
   "private": true,
   "description": "macOS menu bar app that shows the Jira tickets assigned to you, grouped by due date",
-  "keywords": [],
+  "keywords": [
+    "jira",
+    "menu-bar",
+    "tray",
+    "macos",
+    "electron"
+  ],
   "license": "MIT",
+  "homepage": "https://github.com/cassiorsfreitas/jira-tray#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cassiorsfreitas/jira-tray.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cassiorsfreitas/jira-tray/issues"
+  },
   "author": {
     "name": "Cássio Freitas",
     "email": "cassio.rsfreitas@gmail.com"
