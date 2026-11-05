@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_TOGGLE_SHORTCUT,
+  acceleratorKeys,
   formatAccelerator,
   isValidAccelerator,
   recordShortcut,
@@ -135,5 +136,21 @@ describe('formatAccelerator', () => {
     ['Alt+Space', '⌥Space'],
   ])('shows %j as %j', (accelerator, shown) => {
     expect(formatAccelerator(accelerator)).toBe(shown);
+  });
+});
+
+describe('acceleratorKeys', () => {
+  it.each([
+    [DEFAULT_TOGGLE_SHORTCUT, ['⌃', '⌥', '⌘', 'J']],
+    ['Control+Alt+Shift+Command+J', ['⌃', '⌥', '⇧', '⌘', 'J']],
+    ['Command+Up', ['⌘', '↑']],
+    ['Alt+Space', ['⌥', 'Space']],
+    ['Shift+F5', ['⇧', 'F5']],
+  ])('splits %j into one cap per key', (accelerator, keys) => {
+    expect(acceleratorKeys(accelerator)).toEqual(keys);
+  });
+
+  it('puts the modifiers in the macOS order whatever order they were written in', () => {
+    expect(acceleratorKeys('Command+Control+J')).toEqual(['⌃', '⌘', 'J']);
   });
 });
