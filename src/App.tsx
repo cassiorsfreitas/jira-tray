@@ -12,6 +12,7 @@ import type {
 } from "./ticket-list-view";
 import {
   CONTROLS_DIVIDER_HEIGHT,
+  CONTROLS_PADDING_BOTTOM,
   FOOTER_HEIGHT,
   HEADER_HEIGHT,
   LIST_PADDING_Y,
@@ -754,7 +755,7 @@ export function App() {
         style={{
           flexShrink: 0,
           borderBottom: `${CONTROLS_DIVIDER_HEIGHT}px solid var(--border)`,
-          paddingBottom: "4px",
+          paddingBottom: CONTROLS_PADDING_BOTTOM,
         }}
       >
         <SearchField
